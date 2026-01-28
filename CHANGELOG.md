@@ -9,5 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initialized Git repository.
-- Created CHANGELOG.md for tracking changes.
 - Created `docs` directory for project documentation.
+- Initialized React frontend with TypeScript and Tailwind CSS.
+- Configured "Military Green" color theme based on design.
+- Implemented `Navbar` and `Layout` components.
+- Created `CandidatesPage` with filter sidebar and candidate cards.
+- Initialized Node.js + Express backend.
