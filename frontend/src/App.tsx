@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { CandidatesPage } from './pages/CandidatesPage';
+import { SignupPage } from './pages/SignupPage';
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
           <Route path="saved" element={<div className="p-8 text-center text-neutral-gray">Saved Candidates Coming Soon</div>} />
           <Route path="profile" element={<div className="p-8 text-center text-neutral-gray">Company Profile Coming Soon</div>} />
           <Route path="login" element={<div className="p-8 text-center text-neutral-gray">Login Page Coming Soon</div>} />
-          <Route path="signup" element={<div className="p-8 text-center text-neutral-gray">Sign Up Page Coming Soon</div>} />
+          <Route path="signup" element={<SignupPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
