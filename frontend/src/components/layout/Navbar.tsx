@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, User, LogIn } from 'lucide-react';
+import { Logo } from '../ui/Logo';
 
 export function Navbar() {
   const location = useLocation();
@@ -13,10 +14,7 @@ export function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
-              <span className="text-2xl font-bold text-primary flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white text-xs">Hi-Ed</div>
-                Boots2Suits
-              </span>
+              <Logo />
             </div>
             
             {!isLandingPage && (

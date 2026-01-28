@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented `LandingPage` with Hero section, segmentation CTAs, and value propositions.
+- Updated `Navbar` to handle public vs private (dashboard) navigation states.
+- Configured routing to make Landing Page the index route.
 - Initialized Git repository.
 - Created `docs` directory for project documentation.
 - Initialized React frontend with TypeScript and Tailwind CSS.
