@@ -1,21 +1,23 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;800&display=swap');
 
 @theme {
-  --color-primary: #2F5233;
-  --color-primary-light: #3E6B44;
-  --color-primary-dark: #1F3822;
+  --color-primary: #1B3B26; /* Deeper, more premium Military Green */
+  --color-primary-light: #2F5233;
+  --color-primary-dark: #0F2215;
   
-  --color-secondary: #F0F4F0;
+  --color-secondary: #F5F7F5; /* Crisp Off-White */
   --color-secondary-dark: #E0E8E0;
   
-  --color-accent: #D4A574;
-  --color-accent-light: #E5C49F;
+  --color-accent: #C5A059; /* Metallic Bronze/Gold - less yellow, more metal */
+  --color-accent-light: #DBC086;
   
-  --color-neutral-dark: #1F1F1F;
-  --color-neutral-gray: #404040;
-  --color-neutral-light: #E8E8E8;
+  --color-neutral-dark: #1A1A1A;
+  --color-neutral-gray: #4A4A4A;
+  --color-neutral-light: #E5E5E5;
 
-  --font-sans: "Inter", sans-serif;
+  --font-sans: "Montserrat", sans-serif;
+  --font-serif: "Cinzel", serif;
 }
 
 @layer base {

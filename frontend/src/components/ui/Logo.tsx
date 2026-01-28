@@ -22,44 +22,52 @@ export function Logo({ className = '', variant = 'full', size = 'md' }: LogoProp
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Icon: Chevron Tie */}
-      <svg 
-        viewBox="0 0 100 100" 
-        className={`${sizeClasses[size]} w-auto`}
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Background Shield/Shape (Optional, keeping it clean for now) */}
-        
-        {/* The Tie Body */}
-        <path 
-          d="M50 30 L65 90 L50 100 L35 90 L50 30 Z" 
-          className="fill-primary"
-        />
-        
-        {/* The Knot (Chevron Style) */}
-        <path 
-          d="M35 15 L50 5 L65 15 L65 25 L50 35 L35 25 Z" 
-          className="fill-accent"
-        />
+    <div className={`flex items-center gap-3 ${className}`}>
+      {/* Icon: The "Rank & Tie" Emblem */}
+      <div className="relative flex items-center justify-center">
+        <svg 
+          viewBox="0 0 100 100" 
+          className={`${sizeClasses[size]} w-auto drop-shadow-md`}
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Main Tie Body - Dark Green */}
+          <path 
+            d="M50 20 L70 95 L50 100 L30 95 L50 20 Z" 
+            className="fill-primary"
+            stroke="currentColor"
+            strokeWidth="0"
+          />
+          
+          {/* The Knot - Gold Hexagon (Strength) */}
+          <path 
+            d="M32 20 L50 8 L68 20 L68 32 L50 44 L32 32 Z" 
+            className="fill-accent"
+          />
 
-        {/* The "Collar" / Top Chevron above the knot */}
-        <path 
-          d="M25 15 L50 0 L75 15" 
-          stroke="currentColor" 
-          strokeWidth="6" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className="text-primary-dark"
-        />
-      </svg>
+          {/* Upward Chevrons inside the tie (Progress/Rank) */}
+          <path 
+            d="M40 85 L50 75 L60 85 L50 90 Z" 
+            className="fill-accent/80"
+          />
+          <path 
+            d="M40 70 L50 60 L60 70 L50 75 Z" 
+            className="fill-accent/60"
+          />
+           <path 
+            d="M40 55 L50 45 L60 55 L50 60 Z" 
+            className="fill-accent/40"
+          />
+        </svg>
+      </div>
 
       {variant === 'full' && (
-        <div className={`font-bold leading-none ${textSizeClasses[size]}`}>
-          <span className="text-primary-dark">BOOTS</span>
-          <span className="text-accent">2</span>
-          <span className="text-primary">SUITS</span>
+        <div className={`leading-none flex flex-col justify-center ${textSizeClasses[size]}`}>
+          <div className="flex items-baseline tracking-tight">
+            <span className="font-serif font-black text-primary-dark tracking-wider">BOOTS</span>
+            <span className="font-sans font-bold text-accent mx-0.5">2</span>
+            <span className="font-sans font-light text-primary tracking-widest">SUITS</span>
+          </div>
         </div>
       )}
     </div>
