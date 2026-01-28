@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Created `Logo` component with custom SVG design (Tie + Chevron).
+- Implemented `SignupPage` with 2-step process: Role Selection (Veteran vs Employer) and Registration Form.
+- Redesigned `Logo` to V3 (Realistic Tie + Gold Chevron).
+- Updated Typography to Barlow and Barlow Condensed.
 - Updated `Navbar` to use the new `Logo` component.
 - Implemented `LandingPage` with Hero section, segmentation CTAs, and value propositions.
 - Updated `Navbar` to handle public vs private (dashboard) navigation states.
