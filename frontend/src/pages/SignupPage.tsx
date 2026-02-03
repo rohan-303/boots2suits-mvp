@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Briefcase, User, ChevronRight, Check } from 'lucide-react';
-import { Logo } from '../components/ui/Logo';
+import { Link } from 'react-router-dom';
+import { Briefcase, User, ChevronRight, Check, Loader2, AlertCircle } from 'lucide-react';
+
+import { useAuth } from '../context/AuthContext';
+import { SocialAuthButtons } from '../components/auth/SocialAuthButtons';
+import { register } from '../services/auth';
 
 type UserRole = 'veteran' | 'employer' | null;
 
+interface ApiError {
+  message?: string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 export function SignupPage() {
-  const navigate = useNavigate();
+  const { login } = useAuth();
   const [role, setRole] = useState<UserRole>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Form States
   const [formData, setFormData] = useState({
@@ -24,13 +38,34 @@ export function SignupPage() {
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting Registration:', { role, ...formData });
-    // TODO: Connect to backend API
-    navigate('/dashboard');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        role: role || 'veteran',
+        companyName: role === 'employer' ? formData.companyName : undefined,
+        militaryBranch: role === 'veteran' ? formData.militaryBranch : undefined,
+      });
+
+      login(response);
+    } catch (err: unknown) {
+      console.error('Signup Error Detail:', err);
+      const apiError = err as ApiError;
+      const message = apiError.response?.data?.message || apiError.message || 'Failed to create account. Please try again.';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Step 1: Role Selection
@@ -111,8 +146,8 @@ export function SignupPage() {
         <div className="mt-12 text-center">
           <p className="text-neutral-gray">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary font-semibold hover:underline">
-              Log in here
+            <Link to="/login" className="font-medium text-primary hover:text-primary-dark transition-colors">
+              Sign in
             </Link>
           </p>
         </div>
@@ -138,48 +173,99 @@ export function SignupPage() {
             Enter your details below to create your account.
           </p>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md">
+            <div className="flex">
+              <div className="shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8">
+          <SocialAuthButtons mode="signup" />
+          
+          <div className="mt-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-neutral-gray">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+        </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="sr-only">First Name</label>
+                <label htmlFor="firstName" className="block text-sm font-medium text-neutral-dark mb-1">
+                  First Name
+                </label>
                 <input
                   id="firstName"
                   name="firstName"
                   type="text"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
-                  placeholder="First Name"
+                  className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                  placeholder="John"
                   value={formData.firstName}
                   onChange={handleChange}
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="sr-only">Last Name</label>
+                <label htmlFor="lastName" className="block text-sm font-medium text-neutral-dark mb-1">
+                  Last Name
+                </label>
                 <input
                   id="lastName"
                   name="lastName"
                   type="text"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
-                  placeholder="Last Name"
+                  className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                  placeholder="Doe"
                   value={formData.lastName}
                   onChange={handleChange}
                 />
               </div>
             </div>
 
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-dark mb-1">
+                Email Address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+
             {role === 'employer' && (
               <div>
-                <label htmlFor="companyName" className="sr-only">Company Name</label>
+                <label htmlFor="companyName" className="block text-sm font-medium text-neutral-dark mb-1">
+                  Company Name
+                </label>
                 <input
                   id="companyName"
                   name="companyName"
                   type="text"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
-                  placeholder="Company Name"
+                  className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                  placeholder="Acme Corp"
                   value={formData.companyName}
                   onChange={handleChange}
                 />
@@ -188,20 +274,22 @@ export function SignupPage() {
 
             {role === 'veteran' && (
               <div>
-                <label htmlFor="militaryBranch" className="sr-only">Military Branch</label>
+                <label htmlFor="militaryBranch" className="block text-sm font-medium text-neutral-dark mb-1">
+                  Military Branch
+                </label>
                 <select
                   id="militaryBranch"
                   name="militaryBranch"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
                   value={formData.militaryBranch}
                   onChange={handleChange}
                 >
-                  <option value="">Select Branch of Service</option>
+                  <option value="">Select Branch</option>
                   <option value="Army">Army</option>
                   <option value="Navy">Navy</option>
                   <option value="Air Force">Air Force</option>
-                  <option value="Marines">Marine Corps</option>
+                  <option value="Marines">Marines</option>
                   <option value="Coast Guard">Coast Guard</option>
                   <option value="Space Force">Space Force</option>
                 </select>
@@ -209,29 +297,17 @@ export function SignupPage() {
             )}
 
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-dark mb-1">
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none relative block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
-                placeholder="Password"
+                className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
               />
@@ -241,9 +317,17 @@ export function SignupPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Create Account
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                ) : (
+                  <Check className="h-5 w-5 text-accent group-hover:text-white transition-colors" />
+                )}
+              </span>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
           

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented `LoginPage` with email/password authentication form and "Welcome Back" UI.
+- Redesigned `LandingPage` with a modern, "outside the box" aesthetic using abstract shapes, gradients, and card-based layouts.
+- Updated Typography to **Outfit** (headings) and **Inter** (body) for a friendlier, more accessible feel.
+- Added full mobile responsiveness to `Navbar` including a hamburger menu and slide-out drawer.
+- Refined copywriting to be more benefit-driven and less military-jargon heavy ("Your Service Means Business").
+- Enhanced `LandingPage` with "Success Stories", "How It Works" (Process Flow), and "Impact Metrics" sections.
 - Implemented `SignupPage` with 2-step process: Role Selection (Veteran vs Employer) and Registration Form.
 - Redesigned `Logo` to V3 (Realistic Tie + Gold Chevron).
 - Updated Typography to Barlow and Barlow Condensed.
