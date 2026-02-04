@@ -9,11 +9,6 @@ export interface IUser extends Document {
   authProvider: 'local' | 'google' | 'linkedin';
   providerId?: string;
   companyName?: string;
-  companyDescription?: string;
-  companyWebsite?: string;
-  companyLocation?: string;
-  companyIndustry?: string;
-  companySize?: string;
   militaryBranch?: string;
   persona?: {
     role?: string;
@@ -22,7 +17,14 @@ export interface IUser extends Document {
     goals?: string;
     bio?: string;
   };
-  savedCandidates: mongoose.Types.ObjectId[];
+  companyProfile?: {
+    website?: string;
+    description?: string;
+    industry?: string;
+    location?: string;
+    size?: string;
+    logo?: string;
+  };
   createdAt: Date;
 }
 
@@ -72,11 +74,6 @@ const UserSchema: Schema = new Schema({
       return this.role === 'employer';
     },
   },
-  companyDescription: String,
-  companyWebsite: String,
-  companyLocation: String,
-  companyIndustry: String,
-  companySize: String,
   militaryBranch: {
     type: String,
     required: function(this: IUser) {
@@ -90,11 +87,14 @@ const UserSchema: Schema = new Schema({
     goals: String,
     bio: String,
   },
-  savedCandidates: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    default: [],
-  }],
+  companyProfile: {
+    website: String,
+    description: String,
+    industry: String,
+    location: String,
+    size: String,
+    logo: String,
+  },
 }, {
   timestamps: true,
 });

@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { createResume, getMyResume, parseDocument } from '../services/resume';
-import type { ResumeData, MilitaryHistory } from '../services/resume';
+import { createResume, getMyResume, parseDocument } from '../services/resumeService';
+import type { ResumeData, MilitaryHistory } from '../services/resumeService';
 import { Shield, ChevronRight, CheckCircle, Loader2, FileText, Briefcase, Award, Upload, AlertCircle } from 'lucide-react';
-
-interface ApiError {
-  message?: string;
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 const ResumeBuilderPage: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -84,10 +75,9 @@ const ResumeBuilderPage: React.FC = () => {
           });
           setUploadSuccess('Document analyzed! Form populated with extracted data.');
         }
-      } catch (err: unknown) {
+      } catch (err: any) {
         console.error('Upload error:', err);
-        const error = err as ApiError;
-        const backendMessage = error.response?.data?.message || error.message;
+        const backendMessage = err.response?.data?.message || err.message;
         setError(backendMessage ? `Failed: ${backendMessage}` : 'Failed to analyze document. Please enter details manually.');
       } finally {
         setUploading(false);
@@ -103,9 +93,8 @@ const ResumeBuilderPage: React.FC = () => {
     try {
       const response = await createResume(formData);
       setResume(response.data);
-    } catch (err: unknown) {
-      const error = err as ApiError;
-      setError(error.response?.data?.message || 'Failed to generate resume');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to generate resume');
     } finally {
       setLoading(false);
     }
@@ -221,6 +210,14 @@ const ResumeBuilderPage: React.FC = () => {
                       <option value="Marines">Marines</option>
                       <option value="Coast Guard">Coast Guard</option>
                       <option value="Space Force">Space Force</option>
+                      <option value="Army National Guard">Army National Guard</option>
+                      <option value="Air National Guard">Air National Guard</option>
+                      <option value="Army Reserve">Army Reserve</option>
+                      <option value="Navy Reserve">Navy Reserve</option>
+                      <option value="Marine Corps Reserve">Marine Corps Reserve</option>
+                      <option value="Air Force Reserve">Air Force Reserve</option>
+                      <option value="Coast Guard Reserve">Coast Guard Reserve</option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
 

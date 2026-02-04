@@ -35,7 +35,7 @@ const StorySchema = new Schema({
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+    default: 'approved' // Auto-approve for MVP
   }
 }, {
   timestamps: true

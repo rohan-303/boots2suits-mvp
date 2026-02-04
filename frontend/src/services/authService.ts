@@ -7,6 +7,11 @@ export interface RegisterData {
   password?: string;
   role: 'veteran' | 'employer';
   companyName?: string;
+  companyDescription?: string;
+  companyWebsite?: string;
+  companyLocation?: string;
+  companyIndustry?: string;
+  companySize?: string;
   militaryBranch?: string;
 }
 
@@ -22,11 +27,11 @@ export interface AuthResponse {
   email: string;
   role: 'veteran' | 'employer' | 'admin';
   companyName?: string;
-  companyDescription?: string;
-  companyWebsite?: string;
-  companyLocation?: string;
-  companyIndustry?: string;
-  companySize?: string;
+  companyDescription?: string; // Legacy support
+  companyWebsite?: string;     // Legacy support
+  companyLocation?: string;    // Legacy support
+  companyIndustry?: string;    // Legacy support
+  companySize?: string;        // Legacy support
   militaryBranch?: string;
   persona?: {
     role?: string;
@@ -35,7 +40,30 @@ export interface AuthResponse {
     goals?: string;
     bio?: string;
   };
+  companyProfile?: {
+    website?: string;
+    description?: string;
+    industry?: string;
+    location?: string;
+    size?: string;
+    logo?: string;
+  };
   token: string;
+}
+
+export interface GoogleAuthData {
+  token: string;
+  role?: string;
+  militaryBranch?: string;
+  companyName?: string;
+}
+
+export interface LinkedInAuthData {
+  code: string;
+  redirectUri: string;
+  role?: string;
+  militaryBranch?: string;
+  companyName?: string;
 }
 
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
@@ -45,6 +73,16 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
 
 export const login = async (data: LoginData): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>('/auth/login', data);
+  return response.data;
+};
+
+export const googleLogin = async (data: GoogleAuthData): Promise<AuthResponse> => {
+  const response = await api.post<AuthResponse>('/auth/google', data);
+  return response.data;
+};
+
+export const linkedinLogin = async (data: LinkedInAuthData): Promise<AuthResponse> => {
+  const response = await api.post<AuthResponse>('/auth/linkedin', data);
   return response.data;
 };
 

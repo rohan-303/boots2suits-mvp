@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { ScrollToTop } from './components/layout/ScrollToTop';
 import { LandingPage } from './pages/LandingPage';
 import { CandidatesPage } from './pages/CandidatesPage';
 import { SignupPage } from './pages/SignupPage';
@@ -16,20 +17,23 @@ import PartnersPage from './pages/PartnersPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SuccessStoriesPage from './pages/SuccessStoriesPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { MessagesPage } from './pages/MessagesPage';
+import { LinkedInCallback } from './pages/LinkedInCallback';
 import { CompanyProfilePage } from './pages/CompanyProfilePage';
-import { VeteranProfilePage } from './pages/VeteranProfilePage';
-import { SavedCandidatesPage } from './pages/SavedCandidatesPage';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
+          <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<LandingPage />} />
             <Route path="candidates" element={<CandidatesPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="messages" element={<MessagesPage />} />
             <Route path="resume-builder" element={<ResumeBuilderPage />} />
             <Route path="persona-builder" element={<PersonaBuilderPage />} />
             <Route path="jobs" element={<JobsPage />} />
@@ -41,9 +45,8 @@ function App() {
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="stories" element={<SuccessStoriesPage />} />
             <Route path="admin" element={<AdminDashboardPage />} />
-            <Route path="saved" element={<SavedCandidatesPage />} />
-            <Route path="company-profile" element={<CompanyProfilePage />} />
-            <Route path="profile" element={<VeteranProfilePage />} />
+            <Route path="saved" element={<div className="p-8 text-center text-neutral-gray">Saved Candidates Coming Soon</div>} />
+            <Route path="profile" element={<CompanyProfilePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
           </Route>

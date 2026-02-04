@@ -86,7 +86,7 @@ export function EmployerDashboard() {
 
         {/* Company Profile */}
         <div 
-          onClick={() => navigate('/company-profile')}
+          onClick={() => navigate('/profile')}
           className="bg-white p-6 rounded-xl shadow-sm border border-neutral-light hover:shadow-md transition-shadow cursor-pointer group"
         >
           <div className="w-12 h-12 bg-neutral-light rounded-lg flex items-center justify-center mb-4 group-hover:bg-neutral-gray/20 transition-colors">

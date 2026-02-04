@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyApplications } from '../services/application';
-import type { Application } from '../services/application';
+import { getMyApplications } from '../services/applicationService';
 import { ArrowLeft, Briefcase, MapPin, Building, Clock, Calendar, CheckCircle, XCircle, User } from 'lucide-react';
 
 export function MyApplicationsPage() {
   const navigate = useNavigate();
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

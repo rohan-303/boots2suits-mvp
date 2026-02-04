@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jobService } from '../services/jobService';
 import type { Job } from '../types/Job';
-import { MapPin, Briefcase, DollarSign, Clock, Building, Search, Shield, Laptop } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Clock, Building, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export function JobsPage() {
@@ -21,9 +21,8 @@ export function JobsPage() {
         const data = await jobService.getJobs();
         console.log('Jobs fetched:', data);
         setJobs(data);
-      } catch (err: unknown) {
-        const error = err as Error;
-        setError(error.message || 'Failed to load jobs. Please try again later.');
+      } catch (err: any) {
+        setError(err.message || 'Failed to load jobs. Please try again later.');
         console.error('Error fetching jobs:', err);
       } finally {
         setLoading(false);
@@ -121,21 +120,9 @@ export function JobsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2">
-                      {job.clearanceLevel && job.clearanceLevel !== 'None' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                          <Shield className="w-3 h-3 mr-1" />
-                          {job.clearanceLevel}
-                        </span>
-                      )}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                        <Laptop className="w-3 h-3 mr-1" />
-                        {job.workplaceType || 'On-site'}
-                      </span>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                        {job.type}
-                      </span>
-                    </div>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                      {job.type}
+                    </span>
                   </div>
                   
                   <div className="mt-4 flex flex-wrap gap-4 text-sm text-neutral-gray">

@@ -1,26 +1,107 @@
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../../context/AuthContext';
+import { googleLogin, linkedinLogin } from '../../services/authService';
+import { useEffect } from 'react';
 
 interface SocialAuthButtonsProps {
   mode?: 'login' | 'signup';
+  role?: string | null;
+  formData?: any;
+  onError?: (msg: string) => void;
 }
 
-export function SocialAuthButtons({ mode = 'login' }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({ mode = 'login', role, formData, onError }: SocialAuthButtonsProps) {
+  const { login } = useAuth();
   const actionText = mode === 'signup' ? 'Sign up' : 'Continue';
 
-  const handleGoogleClick = () => {
-    // TODO: Implement Google Auth
-    console.log('Google Auth Clicked');
-  };
+  // LinkedIn Configuration
+  const LINKEDIN_CLIENT_ID = import.meta.env.VITE_LINKEDIN_CLIENT_ID || 'YOUR_LINKEDIN_CLIENT_ID';
+  const LINKEDIN_REDIRECT_URI = `${window.location.origin}/auth/linkedin/callback`;
+  const LINKEDIN_SCOPE = 'openid profile email';
+
+  const loginGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const payload = {
+          token: tokenResponse.access_token,
+          role: role || undefined,
+          militaryBranch: formData?.militaryBranch,
+          companyName: formData?.companyName
+        };
+        const user = await googleLogin(payload);
+        login(user);
+      } catch (err: any) {
+        console.error('Google Auth Failed:', err);
+        const msg = err.response?.data?.message || 'Google Login Failed';
+        if (onError) onError(msg);
+        else alert(msg);
+      }
+    },
+    onError: () => {
+      if (onError) onError('Google Login Failed');
+      else alert('Google Login Failed');
+    }
+  });
+
+  // Handle LinkedIn PostMessage Response
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'LINKEDIN_CODE') {
+        try {
+          const payload = {
+            code: event.data.code,
+            redirectUri: LINKEDIN_REDIRECT_URI,
+            role: role || undefined,
+            militaryBranch: formData?.militaryBranch,
+            companyName: formData?.companyName
+          };
+          const user = await linkedinLogin(payload);
+          login(user);
+        } catch (err: any) {
+          console.error('LinkedIn Auth Failed:', err);
+          const msg = err.response?.data?.message || 'LinkedIn Login Failed';
+          if (onError) onError(msg);
+          else alert(msg);
+        }
+      } else if (event.data.type === 'LINKEDIN_ERROR') {
+        if (onError) onError('LinkedIn Login Cancelled or Failed');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [role, formData, login, onError, LINKEDIN_REDIRECT_URI]);
 
   const handleLinkedInClick = () => {
-    // TODO: Implement LinkedIn Auth
-    console.log('LinkedIn Auth Clicked');
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: LINKEDIN_CLIENT_ID,
+      redirect_uri: LINKEDIN_REDIRECT_URI,
+      scope: LINKEDIN_SCOPE,
+    });
+
+    const url = `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
+    
+    // Open popup
+    const width = 600;
+    const height = 700;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+    
+    window.open(
+      url, 
+      'LinkedIn', 
+      `menubar=no,location=no,resizable=no,scrollbars=no,status=no,width=${width},height=${height},top=${top},left=${left}`
+    );
   };
 
   return (
     <div className="space-y-3">
       <button
         type="button"
-        onClick={handleGoogleClick}
+        onClick={() => loginGoogle()}
         className="w-full flex items-center justify-center px-4 py-3 border border-neutral-light rounded-lg shadow-sm bg-white text-sm font-medium text-neutral-dark hover:bg-neutral-light/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
       >
         <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">

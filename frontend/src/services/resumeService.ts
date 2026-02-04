@@ -40,7 +40,7 @@ export const getMyResume = async () => {
   try {
     const response = await api.get<{ success: boolean; data: ResumeData }>('/resume/me');
     return response.data;
-  } catch {
+  } catch (error) {
     // If 404, it just means no resume yet
     return null;
   }

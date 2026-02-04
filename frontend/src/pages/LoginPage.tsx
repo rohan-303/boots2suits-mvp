@@ -4,7 +4,7 @@ import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { SocialAuthButtons } from '../components/auth/SocialAuthButtons';
-import { login as loginService } from '../services/auth';
+import { login as loginService } from '../services/authService';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -159,7 +159,7 @@ export function LoginPage() {
           </div>
 
           <div className="mt-6">
-            <SocialAuthButtons mode="login" />
+            <SocialAuthButtons mode="login" onError={setError} />
           </div>
         </div>
 

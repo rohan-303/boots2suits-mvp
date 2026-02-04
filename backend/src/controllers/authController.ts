@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import axios from 'axios';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Register User
 export const register = async (req: Request, res: Response, next: NextFunction) => {
@@ -103,6 +107,169 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// Google Auth (Login/Register)
+export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token, role, militaryBranch, companyName } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400);
+      throw new Error('Invalid Google Token');
+    }
+
+    const { email, given_name, family_name, sub: googleId } = payload;
+
+    if (!email) {
+       res.status(400);
+       throw new Error('Google account missing email');
+    }
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // User exists - Login
+      if (!user.providerId) {
+          user.authProvider = 'google';
+          user.providerId = googleId;
+          await user.save();
+      }
+      
+      res.json({
+        _id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user.id),
+      });
+    } else {
+      // User does not exist - Register
+      if (!role) {
+        res.status(404);
+        throw new Error('User not found. Please sign up.');
+      }
+
+      // Validation for required fields
+      if (role === 'veteran' && !militaryBranch) {
+        res.status(400);
+        throw new Error('Military branch is required for veterans');
+      }
+      if (role === 'employer' && !companyName) {
+         res.status(400);
+         throw new Error('Company name is required for employers');
+      }
+
+      // Create user
+      user = await User.create({
+        firstName: given_name,
+        lastName: family_name,
+        email,
+        role: role || 'veteran', // Default to veteran if not specified
+        companyName: role === 'employer' ? companyName : undefined,
+        militaryBranch: role === 'veteran' ? militaryBranch : undefined,
+        authProvider: 'google',
+        providerId: googleId,
+        password: await bcrypt.hash(Math.random().toString(36), 10) // Random password
+      });
+
+      res.status(200).json({
+        _id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user.id),
+      });
+    }
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(400).json({ message: 'Google authentication failed' });
+  }
+};
+
+// LinkedIn Authentication
+export const linkedinAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { code, redirectUri, role, militaryBranch, companyName } = req.body;
+    
+    // 1. Exchange authorization code for access token
+    const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken';
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: process.env.LINKEDIN_CLIENT_ID!,
+      client_secret: process.env.LINKEDIN_CLIENT_SECRET!
+    });
+
+    const tokenRes = await axios.post(tokenUrl, params.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    const { access_token } = tokenRes.data;
+
+    // 2. Get User Info (OpenID Connect)
+    const userInfoUrl = 'https://api.linkedin.com/v2/userinfo';
+    const userRes = await axios.get(userInfoUrl, {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+
+    const { sub: linkedinId, given_name, family_name, email } = userRes.data;
+
+    // 3. Find or Create User
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Update provider info if missing
+      if (!user.providerId) {
+        user.authProvider = 'linkedin';
+        user.providerId = linkedinId;
+        await user.save();
+      }
+    } else {
+      // Validate role requirements for new users
+      if (role === 'employer' && !companyName) {
+        throw new Error('Company name is required for employers');
+      }
+      if (role === 'veteran' && !militaryBranch) {
+        throw new Error('Military branch is required for veterans');
+      }
+
+      // Create new user
+      user = await User.create({
+        firstName: given_name,
+        lastName: family_name,
+        email,
+        role: role || 'veteran',
+        companyName: role === 'employer' ? companyName : undefined,
+        militaryBranch: role === 'veteran' ? militaryBranch : undefined,
+        authProvider: 'linkedin',
+        providerId: linkedinId,
+        password: await bcrypt.hash(Math.random().toString(36), 10) // Random password
+      });
+    }
+
+    res.status(200).json({
+      _id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user.id),
+    });
+
+  } catch (error: any) {
+    console.error('LinkedIn Auth Error:', error.response?.data || error.message);
+    res.status(400).json({ message: 'LinkedIn authentication failed' });
   }
 };
 

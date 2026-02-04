@@ -122,7 +122,14 @@ const extractMilitaryData = (text: string) => {
   const lowerText = text.toLowerCase();
 
   // 1. Detect Branch
-  if (lowerText.includes('army') || lowerText.includes('soldier') || lowerText.includes('usa')) data.branch = 'Army';
+  if (lowerText.includes('army national guard') || lowerText.includes('arng')) data.branch = 'Army National Guard';
+  else if (lowerText.includes('air national guard') || lowerText.includes('ang')) data.branch = 'Air National Guard';
+  else if (lowerText.includes('army reserve') || lowerText.includes('usar')) data.branch = 'Army Reserve';
+  else if (lowerText.includes('navy reserve') || lowerText.includes('usnr')) data.branch = 'Navy Reserve';
+  else if (lowerText.includes('marine corps reserve') || lowerText.includes('usmcr')) data.branch = 'Marine Corps Reserve';
+  else if (lowerText.includes('air force reserve') || lowerText.includes('usfr')) data.branch = 'Air Force Reserve';
+  else if (lowerText.includes('coast guard reserve') || lowerText.includes('uscgr')) data.branch = 'Coast Guard Reserve';
+  else if (lowerText.includes('army') || lowerText.includes('soldier') || lowerText.includes('usa')) data.branch = 'Army';
   else if (lowerText.includes('navy') || lowerText.includes('sailor') || lowerText.includes('usn')) data.branch = 'Navy';
   else if (lowerText.includes('air force') || lowerText.includes('airman') || lowerText.includes('usaf')) data.branch = 'Air Force';
   else if (lowerText.includes('marine') || lowerText.includes('corps') || lowerText.includes('usmc')) data.branch = 'Marine Corps';

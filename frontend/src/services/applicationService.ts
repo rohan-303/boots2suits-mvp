@@ -1,15 +1,11 @@
 import api from './api';
-import type { Job } from '../types/Job';
-import type { AuthResponse } from './auth';
-import type { ResumeData } from './resume';
 
 export interface Application {
   _id: string;
-  job: Job;
-  applicant: AuthResponse;
+  job: any;
+  applicant: any;
   status: 'applied' | 'reviewing' | 'interviewing' | 'rejected' | 'accepted';
   appliedAt: string;
-  resume?: ResumeData;
 }
 
 export const applyForJob = async (jobId: string) => {

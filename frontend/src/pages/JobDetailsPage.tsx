@@ -1,19 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService } from '../services/jobService';
-import { applyForJob } from '../services/application';
+import { applyForJob } from '../services/applicationService';
 import type { Job } from '../types/Job';
-import { MapPin, Briefcase, DollarSign, Clock, Building, ArrowLeft, CheckCircle, Shield, Award, Heart, Laptop, Calendar } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Clock, Building, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-interface ApiError {
-  message?: string;
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 export function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,16 +15,17 @@ export function JobDetailsPage() {
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState('');
 
   useEffect(() => {
     const fetchJob = async () => {
+      if (!id) return;
       try {
-        if (!id) return;
         const data = await jobService.getJobById(id);
         setJob(data);
-      } catch (err: unknown) {
-        const error = err as ApiError;
-        setError(error.message || 'Failed to load job details');
+      } catch (err) {
+        setError('Failed to load job details.');
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -43,15 +35,14 @@ export function JobDetailsPage() {
   }, [id]);
 
   const handleApply = async () => {
-    if (!job || !user) return;
-    
+    if (!id) return;
     setApplying(true);
+    setApplyError('');
     try {
-      await applyForJob(job._id);
+      await applyForJob(id);
       setApplySuccess(true);
-    } catch (err: unknown) {
-      const error = err as ApiError;
-      alert(error.message || 'Failed to apply');
+    } catch (err: any) {
+      setApplyError(err.response?.data?.message || 'Failed to apply for job');
     } finally {
       setApplying(false);
     }
@@ -82,7 +73,7 @@ export function JobDetailsPage() {
 
   return (
     <div className="min-h-screen bg-neutral-light/30 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <button 
           onClick={() => navigate('/jobs')}
           className="flex items-center text-neutral-gray hover:text-primary mb-6 transition-colors"
@@ -91,206 +82,138 @@ export function JobDetailsPage() {
           Back to Jobs
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-lg border border-neutral-light overflow-hidden">
-              <div className="bg-primary/5 p-8 border-b border-neutral-light">
-                <div className="flex flex-col md:flex-row justify-between gap-6">
-                  <div className="flex gap-4">
-                    <div className="w-20 h-20 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary font-bold text-3xl border border-neutral-light shrink-0">
-                      {job.company.charAt(0)}
-                    </div>
-                    <div>
-                      <h1 className="text-3xl font-bold text-neutral-dark font-cinzel">{job.title}</h1>
-                      <div className="flex items-center gap-2 text-lg text-neutral-dark/80 mt-1">
-                        <Building className="w-5 h-5 text-neutral-gray" />
-                        {job.company}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {job.clearanceLevel && job.clearanceLevel !== 'None' && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            <Shield className="w-3 h-3 mr-1" />
-                            {job.clearanceLevel}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                          {job.workplaceType || 'On-site'}
-                        </span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                          {job.type}
-                        </span>
-                      </div>
-                    </div>
+        <div className="bg-white rounded-xl shadow-lg border border-neutral-light overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary/5 p-8 border-b border-neutral-light">
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+              <div className="flex gap-4">
+                <div className="w-20 h-20 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary font-bold text-3xl border border-neutral-light">
+                  {job.company.charAt(0)}
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-neutral-dark font-cinzel">{job.title}</h1>
+                  <div className="flex items-center gap-2 text-lg text-neutral-dark/80 mt-1">
+                    <Building className="w-5 h-5 text-neutral-gray" />
+                    {job.company}
                   </div>
                 </div>
               </div>
-
-              <div className="p-8 space-y-8">
-                <section>
-                  <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2 flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-primary" />
-                    Description
-                  </h3>
-                  <div className="prose prose-neutral max-w-none text-neutral-dark/80 whitespace-pre-wrap">
-                    {job.description}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-primary" />
-                    Key Requirements
-                  </h3>
-                  <ul className="space-y-3">
-                    {job.requirements.map((req, index) => (
-                      <li key={index} className="flex items-start gap-3 text-neutral-dark/80">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                        <span>{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                {job.skills && job.skills.length > 0 && (
-                  <section>
-                    <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2 flex items-center gap-2">
-                      <Award className="w-5 h-5 text-primary" />
-                      Required Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {job.skills.map((skill, index) => (
-                        <span key={index} className="px-3 py-1.5 bg-neutral-light/50 text-neutral-dark rounded-lg text-sm border border-neutral-light">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {job.benefits && job.benefits.length > 0 && (
-                  <section>
-                    <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2 flex items-center gap-2">
-                      <Heart className="w-5 h-5 text-primary" />
-                      Benefits
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {job.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-2 text-neutral-dark/80">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
+              
+              <div className="flex flex-col items-end gap-3">
+                 <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-green-50 text-green-700 border border-green-200">
+                  {job.type}
+                </span>
+                <div className="flex items-center gap-1.5 text-sm text-neutral-gray">
+                  <Clock className="w-4 h-4" />
+                  Posted {new Date(job.createdAt).toLocaleDateString()}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-neutral-light shadow-lg">
-              <h3 className="font-bold text-neutral-dark mb-4 text-lg font-cinzel">Job Overview</h3>
-              <div className="space-y-5">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                    <DollarSign className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-gray uppercase font-bold tracking-wider">Salary Range</p>
-                    <p className="text-sm font-medium text-neutral-dark mt-0.5">
-                      {job.salaryRange && job.salaryRange.min != null && job.salaryRange.max != null ? (
-                        `${job.salaryRange.currency} ${job.salaryRange.min.toLocaleString()} - ${job.salaryRange.max.toLocaleString()} / ${job.salaryRange.period || 'Year'}`
-                      ) : (
-                        'Competitive'
-                      )}
-                    </p>
-                  </div>
+          {/* Content */}
+          <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <section>
+                <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2">Description</h3>
+                <div className="prose prose-neutral max-w-none text-neutral-dark/80 whitespace-pre-wrap">
+                  {job.description}
                 </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-gray uppercase font-bold tracking-wider">Location</p>
-                    <p className="text-sm font-medium text-neutral-dark mt-0.5">{job.location}</p>
-                    <p className="text-xs text-neutral-gray mt-0.5">{job.workplaceType || 'On-site'}</p>
-                  </div>
-                </div>
+              </section>
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                    <Laptop className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-gray uppercase font-bold tracking-wider">Experience Level</p>
-                    <p className="text-sm font-medium text-neutral-dark mt-0.5">{job.experienceLevel || 'Mid Level'}</p>
-                  </div>
-                </div>
+              <section>
+                <h3 className="text-lg font-bold text-neutral-dark mb-4 border-b border-neutral-light pb-2">Requirements</h3>
+                <ul className="space-y-3">
+                  {job.requirements.map((req, index) => (
+                    <li key={index} className="flex items-start gap-3 text-neutral-dark/80">
+                      <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <span>{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
 
-                {job.applicationDeadline && (
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                      <Calendar className="w-5 h-5" />
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <div className="bg-neutral-light/20 p-6 rounded-xl border border-neutral-light">
+                <h3 className="font-bold text-neutral-dark mb-4">Job Overview</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <MapPin className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-neutral-gray uppercase font-bold tracking-wider">Deadline</p>
-                      <p className="text-sm font-medium text-neutral-dark mt-0.5">
-                        {new Date(job.applicationDeadline).toLocaleDateString()}
+                      <p className="text-xs text-neutral-gray uppercase font-bold">Location</p>
+                      <p className="text-sm font-medium text-neutral-dark">{job.location}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-gray uppercase font-bold">Salary</p>
+                      <p className="text-sm font-medium text-neutral-dark">
+                        {job.salaryRange && job.salaryRange.min != null && job.salaryRange.max != null ? (
+                          `${job.salaryRange.currency} ${job.salaryRange.min.toLocaleString()} - ${job.salaryRange.max.toLocaleString()}`
+                        ) : (
+                          'Competitive'
+                        )}
                       </p>
                     </div>
                   </div>
-                )}
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/5 rounded-lg text-primary">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-neutral-gray uppercase font-bold tracking-wider">Posted</p>
-                    <p className="text-sm font-medium text-neutral-dark mt-0.5">
-                      {new Date(job.createdAt).toLocaleDateString()}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <Briefcase className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-gray uppercase font-bold">Job Type</p>
+                      <p className="text-sm font-medium text-neutral-dark">{job.type}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-8 pt-6 border-t border-neutral-light">
                 {user?.role === 'veteran' && (
                   <>
                     {applySuccess ? (
-                      <div className="p-4 bg-green-50 text-green-700 rounded-lg border border-green-200 text-center font-medium flex flex-col items-center gap-2">
-                        <CheckCircle className="w-8 h-8" />
-                        Application Sent Successfully!
+                      <div className="mt-6 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200 text-center font-medium">
+                        Application Sent!
                       </div>
                     ) : (
-                      <button 
-                        onClick={handleApply}
-                        disabled={applying}
-                        className="w-full py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all font-bold shadow-md shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-                      >
-                        {applying ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          'Apply Now'
+                      <>
+                        <button 
+                          onClick={handleApply}
+                          disabled={applying}
+                          className="w-full mt-6 bg-primary hover:bg-primary-light text-white font-bold py-3 px-6 rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                        >
+                          {applying ? 'Applying...' : 'Apply Now'}
+                        </button>
+                        {applyError && (
+                          <p className="mt-2 text-sm text-red-600 text-center">{applyError}</p>
                         )}
-                      </button>
+                        <button 
+                          onClick={() => navigate(`/messages?userId=${job.postedBy._id}`, {
+                            state: {
+                              user: {
+                                _id: job.postedBy._id,
+                                firstName: job.postedBy.name.split(' ')[0],
+                                lastName: job.postedBy.name.split(' ').slice(1).join(' ') || '',
+                                role: 'employer',
+                                image: `https://ui-avatars.com/api/?name=${job.postedBy.name}&background=random`
+                              }
+                            }
+                          })}
+                          className="w-full mt-3 bg-white border border-primary text-primary font-bold py-3 px-6 rounded-lg transition-all hover:bg-neutral-50 flex items-center justify-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          Message Employer
+                        </button>
+                      </>
                     )}
                   </>
-                )}
-                
-                {user?.role === 'employer' && user._id === job.postedBy._id && (
-                  <button 
-                    onClick={() => navigate(`/dashboard`)}
-                    className="w-full py-3 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-all font-bold"
-                  >
-                    Manage Application
-                  </button>
                 )}
               </div>
             </div>

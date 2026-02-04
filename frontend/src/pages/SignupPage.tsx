@@ -4,18 +4,9 @@ import { Briefcase, User, ChevronRight, Check, Loader2, AlertCircle } from 'luci
 
 import { useAuth } from '../context/AuthContext';
 import { SocialAuthButtons } from '../components/auth/SocialAuthButtons';
-import { register } from '../services/auth';
+import { register } from '../services/authService';
 
 type UserRole = 'veteran' | 'employer' | null;
-
-interface ApiError {
-  message?: string;
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 export function SignupPage() {
   const { login } = useAuth();
@@ -60,8 +51,8 @@ export function SignupPage() {
       login(response);
     } catch (err: unknown) {
       console.error('Signup Error Detail:', err);
-      const apiError = err as ApiError;
-      const message = apiError.response?.data?.message || apiError.message || 'Failed to create account. Please try again.';
+      const error = err as any;
+      const message = error.response?.data?.message || error.message || 'Failed to create account. Please try again.';
       setError(message);
     } finally {
       setIsLoading(false);
@@ -188,7 +179,12 @@ export function SignupPage() {
         )}
 
         <div className="mt-8">
-          <SocialAuthButtons mode="signup" />
+          <SocialAuthButtons 
+            mode="signup" 
+            role={role}
+            formData={formData}
+            onError={setError}
+          />
           
           <div className="mt-6 relative">
             <div className="absolute inset-0 flex items-center">
@@ -292,6 +288,14 @@ export function SignupPage() {
                   <option value="Marines">Marines</option>
                   <option value="Coast Guard">Coast Guard</option>
                   <option value="Space Force">Space Force</option>
+                  <option value="Army National Guard">Army National Guard</option>
+                  <option value="Air National Guard">Air National Guard</option>
+                  <option value="Army Reserve">Army Reserve</option>
+                  <option value="Navy Reserve">Navy Reserve</option>
+                  <option value="Marine Corps Reserve">Marine Corps Reserve</option>
+                  <option value="Air Force Reserve">Air Force Reserve</option>
+                  <option value="Coast Guard Reserve">Coast Guard Reserve</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
             )}

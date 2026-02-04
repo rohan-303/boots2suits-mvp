@@ -3,21 +3,14 @@ export interface Job {
   title: string;
   company: string;
   location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Temporary' | 'Internship';
-  workplaceType: 'On-site' | 'Hybrid' | 'Remote';
-  experienceLevel: 'Entry' | 'Mid' | 'Senior' | 'Director' | 'Executive';
+  type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote' | 'Internship';
   salaryRange?: {
     min: number;
     max: number;
     currency: string;
-    period: 'Hourly' | 'Monthly' | 'Yearly';
   };
   description: string;
   requirements: string[];
-  skills: string[];
-  benefits: string[];
-  clearanceLevel: 'None' | 'Public Trust' | 'Secret' | 'Top Secret' | 'Top Secret/SCI';
-  applicationDeadline?: string;
   postedBy: {
     _id: string;
     name: string;
@@ -34,18 +27,11 @@ export interface CreateJobData {
   company: string;
   location: string;
   type: string;
-  workplaceType: string;
-  experienceLevel: string;
   salaryRange?: {
     min: number;
     max: number;
     currency: string;
-    period: 'Hourly' | 'Monthly' | 'Yearly';
   };
   description: string;
   requirements: string[];
-  skills: string[];
-  benefits: string[];
-  clearanceLevel: string;
-  applicationDeadline?: string;
 }

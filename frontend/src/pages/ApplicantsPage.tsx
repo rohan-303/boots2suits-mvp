@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getJobApplications } from '../services/application';
-import type { Application } from '../services/application';
+import { getJobApplications } from '../services/applicationService';
 import { jobService } from '../services/jobService';
 import type { Job } from '../types/Job';
 import { ArrowLeft, User, Mail, Shield, FileText, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
@@ -9,7 +8,7 @@ import { ArrowLeft, User, Mail, Shield, FileText, Calendar, CheckCircle, Clock, 
 export function ApplicantsPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,7 +144,7 @@ export function ApplicantsPage() {
                       <div className="mb-4 bg-neutral-light/30 p-4 rounded-lg">
                         <h4 className="text-sm font-semibold text-neutral-dark mb-2">Professional Summary</h4>
                         <p className="text-neutral-gray text-sm line-clamp-3">
-                          {app.applicant.persona.bio || app.applicant.persona.skills?.join(', ')}
+                          {app.applicant.persona.bio || app.applicant.persona.traits?.join(', ')}
                         </p>
                       </div>
                     )}
@@ -159,7 +158,7 @@ export function ApplicantsPage() {
                             Top Skills
                           </h4>
                           <div className="flex flex-wrap gap-2">
-                            {app.resume.generatedSkills?.slice(0, 5).map((skill: string, i: number) => (
+                            {app.resume.skills?.slice(0, 5).map((skill: string, i: number) => (
                               <span key={i} className="px-2 py-1 bg-neutral-light text-neutral-dark rounded text-xs">
                                 {skill}
                               </span>
@@ -168,13 +167,7 @@ export function ApplicantsPage() {
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-neutral-dark mb-2">Military History</h4>
-                          <div className="text-sm text-neutral-gray">
-                            <p className="font-medium">{app.resume.militaryHistory.rank} • {app.resume.militaryHistory.branch}</p>
-                            <p className="text-xs mt-1">{app.resume.militaryHistory.yearsOfService} Years of Service</p>
-                            {app.resume.militaryHistory.securityClearance && (
-                              <p className="text-xs mt-1 text-secondary">Clearance: {app.resume.militaryHistory.securityClearance}</p>
-                            )}
-                          </div>
+                          <p className="text-sm text-neutral-gray">{app.resume.militaryHistory || 'Not specified'}</p>
                         </div>
                       </div>
                     ) : (

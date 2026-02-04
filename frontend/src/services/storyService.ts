@@ -11,7 +11,6 @@ export interface Story {
   content: string;
   militaryBranch: string;
   currentRole: string;
-  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 
@@ -24,7 +23,8 @@ export interface CreateStoryData {
 
 export const storyService = {
   getStories: async (status?: string): Promise<Story[]> => {
-    const response = await api.get(status ? `/stories?status=${status}` : '/stories');
+    const params = status ? { status } : {};
+    const response = await api.get('/stories', { params });
     return response.data;
   },
 
@@ -34,7 +34,7 @@ export const storyService = {
   },
 
   updateStatus: async (id: string, status: string): Promise<Story> => {
-    const response = await api.put(`/stories/${id}/status`, { status });
+    const response = await api.patch(`/stories/${id}/status`, { status });
     return response.data;
   }
 };

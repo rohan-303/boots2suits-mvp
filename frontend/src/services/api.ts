@@ -11,9 +11,10 @@ const api = axios.create({
 // Add a request interceptor to add the auth token to headers
 api.interceptors.request.use(
   (config) => {
-    // Check if url is already absolute
-    const url = config.url?.startsWith('http') ? config.url : `${config.baseURL}${config.url}`;
-    console.log(`API Request: ${config.method?.toUpperCase()} ${url}`, config.data);
+    // Log requests in development
+    if (import.meta.env.DEV) {
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -21,6 +22,21 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor to handle global errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Optional: Redirect to login or dispatch an event
+      // window.location.href = '/login'; 
+    }
     return Promise.reject(error);
   }
 );

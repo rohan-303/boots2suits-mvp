@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { storyService, type Story } from '../services/storyService';
-import { MessageSquare, Star, Briefcase, Medal, X, Check } from 'lucide-react';
+import { MessageSquare, Star, Briefcase, Medal, X } from 'lucide-react';
 
 const SuccessStoriesPage: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,7 +18,6 @@ const SuccessStoriesPage: React.FC = () => {
     content: ''
   });
   const [submitting, setSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   useEffect(() => {
     fetchStories();
@@ -28,7 +25,7 @@ const SuccessStoriesPage: React.FC = () => {
 
   const fetchStories = async () => {
     try {
-      const data = await storyService.getStories('approved');
+      const data = await storyService.getStories();
       setStories(data);
     } catch (err) {
       setError('Failed to load stories');
@@ -43,25 +40,16 @@ const SuccessStoriesPage: React.FC = () => {
     setSubmitting(true);
     try {
       await storyService.createStory(formData);
-      // Show success state inside modal instead of closing immediately
-      setSubmitSuccess(true);
-      
-      // Refresh stories (optional, though new one won't show yet)
+      // Reset form
+      setFormData({ title: '', militaryBranch: '', currentRole: '', content: '' });
+      setShowForm(false);
+      // Refresh stories
       fetchStories();
     } catch (err) {
       console.error(err);
       alert('Failed to submit story');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowForm(false);
-    // Reset form and success state after closing
-    if (submitSuccess) {
-      setSubmitSuccess(false);
-      setFormData({ title: '', militaryBranch: '', currentRole: '', content: '' });
     }
   };
 
@@ -77,17 +65,8 @@ const SuccessStoriesPage: React.FC = () => {
             Real stories from veterans who made the transition from boots to suits.
           </p>
           
-          {/* Action Buttons */}
-          <div className="mt-8">
-            {!user ? (
-              <button
-                onClick={() => navigate('/login')}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Log In to Share Your Story
-              </button>
-            ) : user.role === 'veteran' ? (
+          {user?.role === 'veteran' && (
+            <div className="mt-8">
               <button
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -95,8 +74,8 @@ const SuccessStoriesPage: React.FC = () => {
                 <MessageSquare className="mr-2 h-5 w-5" />
                 Share Your Story
               </button>
-            ) : null}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Stories Grid */}
@@ -113,15 +92,7 @@ const SuccessStoriesPage: React.FC = () => {
             <p className="text-gray-500 max-w-md mx-auto mb-8">
               Your journey could be the inspiration another veteran needs to take the next step.
             </p>
-            {!user ? (
-              <button
-                onClick={() => navigate('/login')}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Log In to Share Your Story
-              </button>
-            ) : user.role === 'veteran' ? (
+            {user?.role === 'veteran' && (
               <button
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
@@ -129,7 +100,7 @@ const SuccessStoriesPage: React.FC = () => {
                 <MessageSquare className="mr-2 h-5 w-5" />
                 Share Your Story
               </button>
-            ) : null}
+            )}
           </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -170,110 +141,97 @@ const SuccessStoriesPage: React.FC = () => {
 
         {/* Modal Form */}
         {showForm && (
-          <div className="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            {/* Background backdrop, show/hide based on modal state. */}
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowForm(false)}></div>
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={() => setShowForm(false)}></div>
+              </div>
 
-            <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-              <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                {/* Modal panel, show/hide based on modal state. */}
-                <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  {submitSuccess ? (
-                    <div className="text-center py-6">
-                      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
-                        <Check className="h-8 w-8 text-green-600" />
+              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">Share Your Transition Story</h3>
+                    <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-500">
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+                  
+                  <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">Story Title</label>
+                      <input
+                        type="text"
+                        required
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="e.g., From Sergeant to Software Engineer"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Military Branch</label>
+                        <select
+                          required
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          value={formData.militaryBranch}
+                          onChange={(e) => setFormData({...formData, militaryBranch: e.target.value})}
+                        >
+                          <option value="">Select Branch</option>
+                          <option value="Army">Army</option>
+                          <option value="Navy">Navy</option>
+                          <option value="Air Force">Air Force</option>
+                          <option value="Marines">Marines</option>
+                          <option value="Coast Guard">Coast Guard</option>
+                          <option value="Space Force">Space Force</option>
+                          <option value="Army National Guard">Army National Guard</option>
+                          <option value="Air National Guard">Air National Guard</option>
+                          <option value="Army Reserve">Army Reserve</option>
+                          <option value="Navy Reserve">Navy Reserve</option>
+                          <option value="Marine Corps Reserve">Marine Corps Reserve</option>
+                          <option value="Air Force Reserve">Air Force Reserve</option>
+                          <option value="Coast Guard Reserve">Coast Guard Reserve</option>
+                          <option value="Other">Other</option>
+                        </select>
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank You for Sharing!</h3>
-                      <p className="text-gray-500 mb-8">
-                        Your story has been submitted successfully. It is now pending review by our team. 
-                        We'll notify you once it's published to inspire other veterans!
-                      </p>
-                      <button
-                        onClick={handleCloseModal}
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-3 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        Return to Stories
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg leading-6 font-medium text-gray-900">Share Your Transition Story</h3>
-                      <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-500">
-                        <X className="h-6 w-6" />
-                      </button>
-                    </div>
-                    
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700">Story Title</label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Current Role</label>
                         <input
                           type="text"
                           required
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                          placeholder="e.g., From Sergeant to Software Engineer"
-                          value={formData.title}
-                          onChange={(e) => setFormData({...formData, title: e.target.value})}
+                          placeholder="e.g., Product Manager"
+                          value={formData.currentRole}
+                          onChange={(e) => setFormData({...formData, currentRole: e.target.value})}
                         />
                       </div>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Military Branch</label>
-                          <select
-                            required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value={formData.militaryBranch}
-                            onChange={(e) => setFormData({...formData, militaryBranch: e.target.value})}
-                          >
-                            <option value="">Select Branch</option>
-                            <option value="Army">Army</option>
-                            <option value="Navy">Navy</option>
-                            <option value="Air Force">Air Force</option>
-                            <option value="Marines">Marines</option>
-                            <option value="Coast Guard">Coast Guard</option>
-                            <option value="Space Force">Space Force</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Current Role</label>
-                          <input
-                            type="text"
-                            required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            placeholder="e.g., Product Manager"
-                            value={formData.currentRole}
-                            onChange={(e) => setFormData({...formData, currentRole: e.target.value})}
-                          />
-                        </div>
-                      </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">Your Story</label>
+                      <textarea
+                        required
+                        rows={6}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Share your challenges, victories, and advice for others..."
+                        value={formData.content}
+                        onChange={(e) => setFormData({...formData, content: e.target.value})}
+                      />
+                    </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700">Your Story</label>
-                        <textarea
-                          required
-                          rows={6}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                          placeholder="Share your challenges, victories, and advice for others..."
-                          value={formData.content}
-                          onChange={(e) => setFormData({...formData, content: e.target.value})}
-                        />
-                      </div>
-
-                      <div className="mt-5 sm:mt-6">
-                        <button
-                          type="submit"
-                          disabled={submitting}
-                          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
-                        >
-                          {submitting ? 'Submitting...' : 'Post Story'}
-                        </button>
-                      </div>
-                    </form>
-                    </>
-                  )}
-                  </div>
+                    <div className="mt-5 sm:mt-6">
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
+                      >
+                        {submitting ? 'Submitting...' : 'Post Story'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>

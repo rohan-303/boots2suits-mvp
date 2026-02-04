@@ -1,16 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, User, Menu, X } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useAuth } from '../../context/AuthContext';
+import { getUnreadCount } from '../../services/messageService';
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isLandingPage = location.pathname === '/';
+  const [unreadCount, setUnreadCount] = useState(0);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchUnread = async () => {
+      try {
+        const count = await getUnreadCount();
+        setUnreadCount(count);
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 10000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -23,7 +42,7 @@ export function Navbar() {
               <Logo />
             </div>
             
-            {isAuthenticated && !isLandingPage && !isAuthPage && (
+            {isAuthenticated && !isAuthPage && (
               <div className="hidden md:ml-8 md:flex md:space-x-8">
                 <NavLink 
                   to="/dashboard"
@@ -49,7 +68,49 @@ export function Navbar() {
                 >
                   Job Posts
                 </NavLink>
+                <NavLink 
+                  to="/messages"
+                  className={({ isActive }) => 
+                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                      isActive 
+                        ? 'border-primary text-primary' 
+                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                    }`
+                  }
+                >
+                  Messages
+                  {unreadCount > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </NavLink>
+                <NavLink 
+                  to="/resources"
+                  className={({ isActive }) => 
+                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                      isActive 
+                        ? 'border-primary text-primary' 
+                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                    }`
+                  }
+                >
+                  Resources
+                </NavLink>
                 {user?.role === 'veteran' && (
+                <>
+                <NavLink 
+                  to="/persona-builder"
+                  className={({ isActive }) => 
+                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                      isActive 
+                        ? 'border-primary text-primary' 
+                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                    }`
+                  }
+                >
+                  Persona Builder
+                </NavLink>
                 <NavLink 
                   to="/veteran/applications"
                   className={({ isActive }) => 
@@ -62,6 +123,7 @@ export function Navbar() {
                 >
                   My Applications
                 </NavLink>
+                </>
                 )}
                 {user?.role === 'employer' && (
                 <NavLink 
@@ -87,9 +149,9 @@ export function Navbar() {
                     }`
                   }
                 >
-                  {user?.role === 'employer' ? 'Saved Candidates' : 'Saved Jobs'}
+                  Saved
                 </NavLink>
-                {user?.role === 'admin' && (
+                {(user?.role === 'admin' || user?.role === 'employer') && (
                 <NavLink 
                   to="/admin"
                   className={({ isActive }) => 
@@ -130,7 +192,7 @@ export function Navbar() {
                 </button>
                 <div 
                   className="flex items-center gap-2 cursor-pointer hover:bg-neutral-light p-2 rounded-lg transition-colors" 
-                  onClick={() => navigate(user?.role === 'employer' ? '/company-profile' : '/profile')}
+                  onClick={() => user?.role === 'employer' ? navigate('/profile') : navigate('/persona-builder')}
                 >
                   <div className="w-8 h-8 bg-neutral-light rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-neutral-gray" />
@@ -171,7 +233,7 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-neutral-light absolute w-full shadow-lg">
           <div className="pt-2 pb-3 space-y-1 px-4">
-            {!isLandingPage ? (
+            {isAuthenticated ? (
               <>
                 <NavLink 
                   to="/dashboard"
@@ -199,6 +261,34 @@ export function Navbar() {
                 >
                   Job Posts
                 </NavLink>
+                <NavLink 
+                  to="/resources"
+                  onClick={closeMobileMenu}
+                  className={({ isActive }) => 
+                    `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                      isActive 
+                        ? 'border-primary text-primary bg-primary/5' 
+                        : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                    }`
+                  }
+                >
+                  Resources
+                </NavLink>
+                {user?.role === 'veteran' && (
+                  <NavLink 
+                    to="/persona-builder"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Persona Builder
+                  </NavLink>
+                )}
                 {user?.role === 'employer' && (
                   <NavLink 
                     to="/candidates"

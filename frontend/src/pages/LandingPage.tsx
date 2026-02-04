@@ -22,8 +22,6 @@ export function LandingPage() {
         setStories(data.slice(0, 3));
       } catch (err) {
         console.error('Failed to load stories', err);
-        // Fallback to empty array to show static stories
-        setStories([]);
       }
     };
     loadStories();
@@ -174,25 +172,22 @@ export function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {stories.length > 0 ? (
               stories.map((story) => (
-                <div key={story._id} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-neutral-light relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    VERIFIED
-                  </div>
+                <div key={story._id} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-1 text-accent mb-4">
                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-5 h-5 fill-current" />)}
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">{story.title}</h3>
-                  <p className="text-primary-dark italic mb-6 text-base relative z-10 line-clamp-4 min-h-20">
+                  <p className="text-primary-dark italic mb-6 text-base relative z-10 line-clamp-4">
                     <Quote className="w-8 h-8 text-gray-100 absolute -top-2 -left-2 -z-10" />
                     "{story.content}"
                   </p>
-                  <div className="flex items-center gap-4 mt-auto">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
                       {story.user.firstName.charAt(0)}
                     </div>
                     <div>
                       <div className="font-bold text-primary-dark">{story.user.firstName} {story.user.lastName}</div>
-                      <div className="text-sm text-neutral-gray">{story.militaryBranch} • {story.currentRole}</div>
+                      <div className="text-sm text-neutral-gray">{story.militaryBranch} to {story.currentRole}</div>
                     </div>
                   </div>
                 </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateProfile } from '../services/user';
-import { Send, Mic, Bot, FileText, Briefcase, User } from 'lucide-react';
+import { updateProfile } from '../services/userService';
+import { Send, Mic, Bot, FileText, Briefcase, User, Compass } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -264,7 +264,27 @@ const PersonaBuilderPage: React.FC = () => {
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Career Resources</h3>
             <div className="space-y-4">
-              <div className="group flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200">
+              <a 
+                href="https://www.mynextmove.org/vets/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+              >
+                <div className="bg-blue-50 p-2 rounded-lg mr-3 group-hover:bg-blue-100 transition-colors">
+                  <Compass className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900">MOS Translator</h4>
+                  <p className="text-xs text-gray-500">Find civilian job titles using O*NET</p>
+                </div>
+              </a>
+
+              <a 
+                href="https://docs.google.com/document/u/0/?ftv=1&tgif=d"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+              >
                 <div className="bg-[#C5A059]/10 p-2 rounded-lg mr-3 group-hover:bg-[#C5A059]/20 transition-colors">
                   <FileText className="h-5 w-5 text-[#C5A059]" />
                 </div>
@@ -272,9 +292,14 @@ const PersonaBuilderPage: React.FC = () => {
                   <h4 className="text-sm font-bold text-gray-900">Resume Templates</h4>
                   <p className="text-xs text-gray-500">Military-to-civilian resume formats</p>
                 </div>
-              </div>
+              </a>
 
-              <div className="group flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200">
+              <a 
+                href="https://grow.google/certificates/interview-warmup/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-start p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+              >
                 <div className="bg-[#4A5D23]/10 p-2 rounded-lg mr-3 group-hover:bg-[#4A5D23]/20 transition-colors">
                   <Briefcase className="h-5 w-5 text-[#4A5D23]" />
                 </div>
@@ -282,7 +307,7 @@ const PersonaBuilderPage: React.FC = () => {
                   <h4 className="text-sm font-bold text-gray-900">Interview Prep</h4>
                   <p className="text-xs text-gray-500">Practice common civilian interview questions</p>
                 </div>
-              </div>
+              </a>
             </div>
           </div>
         </div>
