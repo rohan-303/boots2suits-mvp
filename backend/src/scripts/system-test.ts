@@ -1,4 +1,5 @@
 import axios from 'axios';
+import process from 'process';
 
 const API_URL = 'http://localhost:5000/api';
 let veteranToken = '';
