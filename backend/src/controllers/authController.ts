@@ -1,16 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
+import Company from '../models/Company';
+import sendEmail from '../utils/sendEmail';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Register User
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { firstName, lastName, email, password, role, companyName, militaryBranch } = req.body;
+    const { firstName, lastName, email, password, role, companyName, militaryBranch, companyWebsite, termsAccepted } = req.body;
     
     console.log('Register attempt:', { ...req.body, password: '***' });
 
@@ -19,6 +22,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       console.log('Registration failed: Missing required fields');
       res.status(400);
       throw new Error('Please provide all required fields');
+    }
+
+    if (termsAccepted !== true) {
+      res.status(400);
+      throw new Error('You must accept the Terms and Conditions');
     }
 
     // Role-specific validation
@@ -55,7 +63,31 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       companyName,
       militaryBranch,
       authProvider: 'local',
+      termsAccepted,
+      termsAcceptedAt: new Date(),
+      companyProfile: companyWebsite ? { website: companyWebsite } : undefined,
     });
+
+    // If employer, create Company record and link
+    if (role === 'employer' && user) {
+        try {
+            const company = await Company.create({
+                name: companyName,
+                website: companyWebsite,
+                adminId: user._id,
+                policies: {
+                    termsAccepted: termsAccepted,
+                    termsAcceptedAt: new Date()
+                }
+            });
+            
+            user.companyId = company._id as any;
+            await user.save();
+        } catch (err) {
+            console.error('Failed to create company record:', err);
+            // Optionally rollback user creation or just log error (MVP: log error)
+        }
+    }
 
     if (user) {
       res.status(201).json({
@@ -64,6 +96,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        companyId: user.companyId,
         token: generateToken(user.id),
       });
     } else {
@@ -270,6 +303,102 @@ export const linkedinAuth = async (req: Request, res: Response, next: NextFuncti
   } catch (error: any) {
     console.error('LinkedIn Auth Error:', error.response?.data || error.message);
     res.status(400).json({ message: 'LinkedIn authentication failed' });
+  }
+};
+
+// Forgot Password
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      res.status(404);
+      throw new Error('There is no user with that email');
+    }
+
+    // Get reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Set expire
+    user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 Minutes
+
+    await user.save({ validateBeforeSave: false });
+
+    // Create reset url
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+    const message = `
+      You are receiving this email because you (or someone else) has requested the reset of a password.
+      Please click on the link below to reset your password:
+      
+      ${resetUrl}
+
+      If you did not request this, please ignore this email and your password will remain unchanged.
+    `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Password Reset Token',
+        message,
+      });
+
+      res.status(200).json({ success: true, data: 'Email sent' });
+    } catch (err) {
+      console.log(err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save({ validateBeforeSave: false });
+
+      res.status(500);
+      throw new Error('Email could not be sent');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reset Password
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get hashed token
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(req.params.resettoken as string)
+      .digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      res.status(400);
+      throw new Error('Invalid token');
+    }
+
+    // Set new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      token: generateToken(user.id),
+    });
+  } catch (error) {
+    next(error);
   }
 };
 

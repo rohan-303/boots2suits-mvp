@@ -44,126 +44,187 @@ export function Navbar() {
             
             {isAuthenticated && !isAuthPage && (
               <div className="hidden md:ml-8 md:flex md:space-x-8">
-                <NavLink 
-                  to="/dashboard"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Dashboard
-                </NavLink>
-                <NavLink 
-                  to="/jobs"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Job Posts
-                </NavLink>
-                <NavLink 
-                  to="/messages"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Messages
-                  {unreadCount > 0 && (
-                    <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                      {unreadCount}
-                    </span>
-                  )}
-                </NavLink>
-                <NavLink 
-                  to="/resources"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Resources
-                </NavLink>
-                {user?.role === 'veteran' && (
-                <>
-                <NavLink 
-                  to="/persona-builder"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Persona Builder
-                </NavLink>
-                <NavLink 
-                  to="/veteran/applications"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  My Applications
-                </NavLink>
-                </>
+                {/* Employer Navigation */}
+                {user?.role === 'employer' ? (
+                  <>
+                    <NavLink 
+                      to="/dashboard"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+                    <NavLink 
+                      to="/post-job"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Post a Job
+                    </NavLink>
+                    <NavLink 
+                      to="/candidates"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Candidates
+                    </NavLink>
+                    <NavLink 
+                      to="/saved"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Saved
+                    </NavLink>
+                    <NavLink 
+                      to="/messages"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Messages
+                      {unreadCount > 0 && (
+                        <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </NavLink>
+                  </>
+                ) : (
+                  /* Veteran / Other Navigation */
+                  <>
+                    <NavLink 
+                      to="/dashboard"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+                    <NavLink 
+                      to="/jobs"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Job Posts
+                    </NavLink>
+                    <NavLink 
+                      to="/messages"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Messages
+                      {unreadCount > 0 && (
+                        <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </NavLink>
+                    <NavLink 
+                      to="/resources"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Resources
+                    </NavLink>
+                    {user?.role === 'veteran' && (
+                      <>
+                        <NavLink 
+                          to="/persona-builder"
+                          className={({ isActive }) => 
+                            `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                              isActive 
+                                ? 'border-primary text-primary' 
+                                : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                            }`
+                          }
+                        >
+                          Persona Builder
+                        </NavLink>
+                        <NavLink 
+                          to="/veteran/applications"
+                          className={({ isActive }) => 
+                            `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                              isActive 
+                                ? 'border-primary text-primary' 
+                                : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                            }`
+                          }
+                        >
+                          My Applications
+                        </NavLink>
+                      </>
+                    )}
+                    <NavLink 
+                      to="/saved"
+                      className={({ isActive }) => 
+                        `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                          isActive 
+                            ? 'border-primary text-primary' 
+                            : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                        }`
+                      }
+                    >
+                      Saved
+                    </NavLink>
+                  </>
                 )}
-                {user?.role === 'employer' && (
-                <NavLink 
-                  to="/candidates"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Candidates
-                </NavLink>
-                )}
-                <NavLink 
-                  to="/saved"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Saved
-                </NavLink>
-                {(user?.role === 'admin' || user?.role === 'employer') && (
-                <NavLink 
-                  to="/admin"
-                  className={({ isActive }) => 
-                    `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
-                      isActive 
-                        ? 'border-primary text-primary' 
-                        : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
-                    }`
-                  }
-                >
-                  Admin
-                </NavLink>
+                
+                {user?.role === 'admin' && (
+                  <NavLink 
+                    to="/admin"
+                    className={({ isActive }) => 
+                      `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+                        isActive 
+                          ? 'border-primary text-primary' 
+                          : 'border-transparent text-neutral-gray hover:border-neutral-light hover:text-neutral-dark'
+                      }`
+                    }
+                  >
+                    Admin
+                  </NavLink>
                 )}
               </div>
             )}
@@ -234,49 +295,11 @@ export function Navbar() {
         <div className="md:hidden bg-white border-t border-neutral-light absolute w-full shadow-lg">
           <div className="pt-2 pb-3 space-y-1 px-4">
             {isAuthenticated ? (
-              <>
-                <NavLink 
-                  to="/dashboard"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) => 
-                    `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
-                      isActive 
-                        ? 'border-primary text-primary bg-primary/5' 
-                        : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
-                    }`
-                  }
-                >
-                  Dashboard
-                </NavLink>
-                <NavLink 
-                  to="/jobs"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) => 
-                    `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
-                      isActive 
-                        ? 'border-primary text-primary bg-primary/5' 
-                        : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
-                    }`
-                  }
-                >
-                  Job Posts
-                </NavLink>
-                <NavLink 
-                  to="/resources"
-                  onClick={closeMobileMenu}
-                  className={({ isActive }) => 
-                    `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
-                      isActive 
-                        ? 'border-primary text-primary bg-primary/5' 
-                        : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
-                    }`
-                  }
-                >
-                  Resources
-                </NavLink>
-                {user?.role === 'veteran' && (
+              user?.role === 'employer' ? (
+                /* Employer Mobile Menu */
+                <>
                   <NavLink 
-                    to="/persona-builder"
+                    to="/dashboard"
                     onClick={closeMobileMenu}
                     className={({ isActive }) => 
                       `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
@@ -286,10 +309,21 @@ export function Navbar() {
                       }`
                     }
                   >
-                    Persona Builder
+                    Dashboard
                   </NavLink>
-                )}
-                {user?.role === 'employer' && (
+                  <NavLink 
+                    to="/post-job"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Post a Job
+                  </NavLink>
                   <NavLink 
                     to="/candidates"
                     onClick={closeMobileMenu}
@@ -303,8 +337,128 @@ export function Navbar() {
                   >
                     Candidates
                   </NavLink>
-                )}
-              </>
+                  <NavLink 
+                    to="/saved"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Saved
+                  </NavLink>
+                  <NavLink 
+                    to="/messages"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full inline-block">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </NavLink>
+                </>
+              ) : (
+                /* Veteran / Other Mobile Menu */
+                <>
+                  <NavLink 
+                    to="/dashboard"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Dashboard
+                  </NavLink>
+                  <NavLink 
+                    to="/jobs"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Job Posts
+                  </NavLink>
+                  <NavLink 
+                    to="/messages"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full inline-block">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </NavLink>
+                  <NavLink 
+                    to="/resources"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Resources
+                  </NavLink>
+                  {user?.role === 'veteran' && (
+                    <NavLink 
+                      to="/persona-builder"
+                      onClick={closeMobileMenu}
+                      className={({ isActive }) => 
+                        `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                          isActive 
+                            ? 'border-primary text-primary bg-primary/5' 
+                            : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                        }`
+                      }
+                    >
+                      Persona Builder
+                    </NavLink>
+                  )}
+                  <NavLink 
+                    to="/saved"
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => 
+                      `block pl-3 pr-4 py-3 border-l-4 text-base font-medium ${
+                        isActive 
+                          ? 'border-primary text-primary bg-primary/5' 
+                          : 'border-transparent text-neutral-gray hover:bg-neutral-light hover:border-neutral-gray'
+                      }`
+                    }
+                  >
+                    Saved
+                  </NavLink>
+                </>
+              )
             ) : (
               <div className="flex flex-col gap-3 py-4">
                 <button 

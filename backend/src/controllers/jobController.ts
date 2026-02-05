@@ -7,7 +7,26 @@ import Job from '../models/Job';
 export const createJob = async (req: Request, res: Response) => {
   try {
     console.log('createJob controller hit');
-    const { title, company, location, type, salaryRange, description, requirements } = req.body;
+    const { 
+      title, 
+      company, 
+      location, 
+      type, 
+      salaryRange, 
+      description, 
+      responsibilities,
+      requirements,
+      workMode,
+      workExperience,
+      educationLevel,
+      educationField,
+      keySkills,
+      openings,
+      workTimings,
+      hiringTimeline,
+      state,
+      city
+    } = req.body;
     console.log('Request body:', req.body);
     
     // Get user from request (attached by auth middleware)
@@ -34,7 +53,18 @@ export const createJob = async (req: Request, res: Response) => {
       type,
       salaryRange,
       description,
+      responsibilities,
       requirements,
+      workMode,
+      workExperience,
+      educationLevel,
+      educationField,
+      keySkills,
+      openings,
+      workTimings,
+      hiringTimeline,
+      state,
+      city,
       postedBy: user._id,
     };
     console.log('Creating job with data:', jobData);
@@ -144,7 +174,58 @@ export const deleteJob = async (req: Request, res: Response) => {
   }
 };
 
-// @desc    Get jobs posted by current employer
+import pdf from 'pdf-parse';
+
+// @desc    Parse Job Description from file
+// @route   POST /api/jobs/parse-jd
+// @access  Private (Employer only)
+export const parseJobDescription = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      res.status(400);
+      throw new Error('No file uploaded');
+    }
+
+    const dataBuffer = req.file.buffer;
+    
+    let text = '';
+    
+    if (req.file.mimetype === 'application/pdf') {
+        const data = await pdf(dataBuffer);
+        text = data.text;
+    } else {
+        // Assume text file for now if not PDF (could expand to docx later)
+        text = dataBuffer.toString('utf8');
+    }
+
+    // Basic heuristic extraction (simulation of "AI" parsing)
+    // In a real app, this would be sent to an LLM
+    const titleMatch = text.match(/(?:Job Title|Position|Role):\s*(.+)/i);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    
+    // Extract sections roughly
+    const sections = text.split(/\n(?=[A-Z][a-z]+:)/); // Split by Capitalized Headers
+    
+    // Very basic keyword matching
+    const extractedData = {
+        title,
+        description: text.substring(0, 1000), // First 1000 chars as description placeholder
+        requirements: [] as string[],
+        skills: [] as string[]
+    };
+
+    res.status(200).json({ 
+        success: true, 
+        data: extractedData,
+        rawText: text 
+    });
+
+  } catch (error: any) {
+    console.error('Error parsing JD:', error);
+    res.status(500).json({ message: 'Failed to parse file' });
+  }
+};
+
 // @route   GET /api/jobs/my-jobs
 // @access  Private (Employer only)
 export const getMyJobs = async (req: Request, res: Response) => {

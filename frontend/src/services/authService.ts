@@ -13,6 +13,7 @@ export interface RegisterData {
   companyIndustry?: string;
   companySize?: string;
   militaryBranch?: string;
+  termsAccepted?: boolean;
 }
 
 export interface LoginData {
@@ -83,6 +84,16 @@ export const googleLogin = async (data: GoogleAuthData): Promise<AuthResponse> =
 
 export const linkedinLogin = async (data: LinkedInAuthData): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>('/auth/linkedin', data);
+  return response.data;
+};
+
+export const forgotPassword = async (email: string) => {
+  const response = await api.post('/auth/forgotpassword', { email });
+  return response.data;
+};
+
+export const resetPassword = async (password: string, token: string): Promise<AuthResponse> => {
+  const response = await api.put<AuthResponse>(`/auth/resetpassword/${token}`, { password });
   return response.data;
 };
 

@@ -36,4 +36,17 @@ export const jobService = {
     const response = await api.get('/jobs/my-jobs');
     return response.data;
   },
+
+  // Parse Job Description from file
+  parseJobDescription: async (file: File): Promise<{ data: Partial<CreateJobData>, rawText: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/jobs/parse-jd', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };

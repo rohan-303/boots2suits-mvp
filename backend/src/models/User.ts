@@ -8,6 +8,7 @@ export interface IUser extends Document {
   role: 'veteran' | 'employer';
   authProvider: 'local' | 'google' | 'linkedin';
   providerId?: string;
+  companyId?: mongoose.Types.ObjectId;
   companyName?: string;
   militaryBranch?: string;
   persona?: {
@@ -16,6 +17,12 @@ export interface IUser extends Document {
     skills?: string[];
     goals?: string;
     bio?: string;
+    mosCode?: string;
+    securityClearance?: string;
+    currentLocation?: {
+      city: string;
+      state: string;
+    };
   };
   companyProfile?: {
     website?: string;
@@ -25,6 +32,10 @@ export interface IUser extends Document {
     size?: string;
     logo?: string;
   };
+  termsAccepted: boolean;
+  termsAcceptedAt?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
   createdAt: Date;
 }
 
@@ -68,6 +79,10 @@ const UserSchema: Schema = new Schema({
   providerId: {
     type: String,
   },
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company',
+  },
   companyName: {
     type: String,
     required: function(this: IUser) {
@@ -86,6 +101,12 @@ const UserSchema: Schema = new Schema({
     skills: [String],
     goals: String,
     bio: String,
+    mosCode: String,
+    securityClearance: String,
+    currentLocation: {
+      city: String,
+      state: String
+    }
   },
   companyProfile: {
     website: String,
@@ -95,6 +116,16 @@ const UserSchema: Schema = new Schema({
     size: String,
     logo: String,
   },
+  termsAccepted: {
+    type: Boolean,
+    required: [true, 'You must accept the terms and conditions'],
+    default: false,
+  },
+  termsAcceptedAt: {
+    type: Date,
+  },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
 }, {
   timestamps: true,
 });

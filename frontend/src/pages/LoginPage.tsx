@@ -103,9 +103,9 @@ export function LoginPage() {
                   Password
                 </label>
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-primary hover:text-primary-dark transition-colors">
+                  <Link to="/forgot-password" className="font-medium text-primary hover:text-primary-dark transition-colors">
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
               </div>
               <div className="relative">

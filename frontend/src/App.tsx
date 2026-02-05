@@ -5,6 +5,8 @@ import { LandingPage } from './pages/LandingPage';
 import { CandidatesPage } from './pages/CandidatesPage';
 import { SignupPage } from './pages/SignupPage';
 import { LoginPage } from './pages/LoginPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import ResumeBuilderPage from './pages/ResumeBuilderPage';
 import PersonaBuilderPage from './pages/PersonaBuilderPage';
@@ -49,6 +51,8 @@ function App() {
             <Route path="profile" element={<CompanyProfilePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password/:token" element={<ResetPasswordPage />} />
           </Route>
         </Routes>
       </AuthProvider>

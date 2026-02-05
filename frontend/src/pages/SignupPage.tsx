@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Briefcase, User, ChevronRight, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Briefcase, User, ChevronRight, Check, Loader2, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { SocialAuthButtons } from '../components/auth/SocialAuthButtons';
@@ -21,19 +21,48 @@ export function SignupPage() {
     email: '',
     password: '',
     companyName: '',
+    companyWebsite: '',
     militaryBranch: '',
+    termsAccepted: false,
   });
 
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: value
     });
     if (error) setError(null);
   };
 
+  // Password Requirements Logic
+  const hasMinLength = formData.password.length >= 8 && formData.password.length <= 16;
+  const hasUpper = /[A-Z]/.test(formData.password);
+  const hasLower = /[a-z]/.test(formData.password);
+  const hasNumber = /[0-9]/.test(formData.password);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
+  
+  const specialCount = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+  const hasTwoSpecial = specialCount >= 2;
+
+  const isPasswordValid = hasMinLength && hasTwoSpecial && formData.password === confirmPassword;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isPasswordValid) {
+      setError("Please ensure your password meets all requirements and matches the confirmation.");
+      return;
+    }
+
+    if (!formData.termsAccepted) {
+      setError("You must accept the Terms and Conditions to register.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -45,7 +74,9 @@ export function SignupPage() {
         password: formData.password,
         role: role || 'veteran',
         companyName: role === 'employer' ? formData.companyName : undefined,
+        companyWebsite: role === 'employer' ? formData.companyWebsite : undefined,
         militaryBranch: role === 'veteran' ? formData.militaryBranch : undefined,
+        termsAccepted: formData.termsAccepted,
       });
 
       login(response);
@@ -251,21 +282,37 @@ export function SignupPage() {
             </div>
 
             {role === 'employer' && (
-              <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-neutral-dark mb-1">
-                  Company Name
-                </label>
-                <input
-                  id="companyName"
-                  name="companyName"
-                  type="text"
-                  required
-                  className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
-                  placeholder="Acme Corp"
-                  value={formData.companyName}
-                  onChange={handleChange}
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="companyName" className="block text-sm font-medium text-neutral-dark mb-1">
+                    Company Name
+                  </label>
+                  <input
+                    id="companyName"
+                    name="companyName"
+                    type="text"
+                    required
+                    className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                    placeholder="Acme Corp"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="companyWebsite" className="block text-sm font-medium text-neutral-dark mb-1">
+                    Company Website (Optional)
+                  </label>
+                  <input
+                    id="companyWebsite"
+                    name="companyWebsite"
+                    type="url"
+                    className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                    placeholder="https://acme.com"
+                    value={formData.companyWebsite}
+                    onChange={handleChange}
+                  />
+                </div>
+              </>
             )}
 
             {role === 'veteran' && (
@@ -300,28 +347,124 @@ export function SignupPage() {
               </div>
             )}
 
+            {/* Password Section */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-dark mb-1">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-dark">
+                  Create your password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-xs text-primary hover:text-primary-dark font-medium"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
-                className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
-                placeholder="••••••••"
+                className={`appearance-none block w-full px-3 py-3 border ${!hasMinLength && formData.password.length > 0 ? 'border-red-300 ring-red-200' : 'border-neutral-light'} placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow`}
+                placeholder="********"
                 value={formData.password}
                 onChange={handleChange}
               />
+            </div>
+
+            {/* Password Requirements */}
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-neutral-dark">Password must:</p>
+              
+              <div className="flex items-center text-sm">
+                {hasMinLength ? (
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 shrink-0" />
+                ) : (
+                  <div className={`w-4 h-4 rounded-full border mr-2 shrink-0 ${formData.password.length > 0 ? 'border-red-500 bg-red-100' : 'border-gray-300'}`}>
+                    {formData.password.length > 0 && <X className="w-3 h-3 text-red-500 m-auto" />}
+                  </div>
+                )}
+                <span className={hasMinLength ? 'text-neutral-dark' : 'text-neutral-gray'}>
+                  Be between 8 and 16 characters
+                </span>
+              </div>
+
+              <div className="flex items-start text-sm">
+                 {hasTwoSpecial ? (
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-2 shrink-0 mt-0.5" />
+                ) : (
+                  <div className={`w-4 h-4 rounded-full border mr-2 shrink-0 mt-0.5 ${formData.password.length > 0 ? 'border-red-500 bg-red-100' : 'border-gray-300'}`}>
+                     {formData.password.length > 0 && <X className="w-3 h-3 text-red-500 m-auto" />}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <span className={hasTwoSpecial ? 'text-neutral-dark' : 'text-neutral-gray'}>
+                    Include at least two of the following:
+                  </span>
+                  <ul className="mt-1 ml-1 text-xs text-neutral-gray space-y-1 list-disc list-inside">
+                    <li className={hasUpper ? 'text-green-600 font-medium' : ''}>An uppercase character</li>
+                    <li className={hasLower ? 'text-green-600 font-medium' : ''}>A lowercase character</li>
+                    <li className={hasNumber ? 'text-green-600 font-medium' : ''}>A number</li>
+                    <li className={hasSpecial ? 'text-green-600 font-medium' : ''}>A special character</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-dark">
+                  Confirm your password
+                </label>
+              </div>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                required
+                className="appearance-none block w-full px-3 py-3 border border-neutral-light placeholder-neutral-gray text-neutral-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm transition-shadow"
+                placeholder="********"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {confirmPassword && formData.password !== confirmPassword && (
+                 <p className="mt-1 text-xs text-red-600">Passwords do not match</p>
+              )}
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="termsAccepted"
+                  name="termsAccepted"
+                  type="checkbox"
+                  required
+                  className="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
+                  checked={formData.termsAccepted}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="termsAccepted" className="font-medium text-neutral-dark">
+                  I agree to the{' '}
+                  <span className="text-primary hover:text-primary-dark cursor-pointer">Terms and Conditions</span>
+                </label>
+                <p className="text-neutral-gray">
+                  I also acknowledge the{' '}
+                  <span className="text-primary hover:text-primary-dark cursor-pointer">Privacy Policy</span>.
+                </p>
+              </div>
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !isPasswordValid || !formData.termsAccepted}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -336,7 +479,7 @@ export function SignupPage() {
           </div>
           
           <div className="text-center text-xs text-neutral-gray">
-            By clicking "Create Account", you agree to our Terms of Service and Privacy Policy.
+            Protected by reCAPTCHA and subject to the Google Privacy Policy and Terms of Service.
           </div>
         </form>
       </div>
