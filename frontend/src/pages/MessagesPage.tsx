@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getConversations, getMessages, sendMessage, type Conversation, type Message } from '../services/messageService';
 import { getUser, getCandidateById } from '../services/userService';
-import { Send, Loader2, Lock, MoreVertical, Search, CheckCheck, Sparkles, MessageSquare, Paperclip, Calendar, User, FileText } from 'lucide-react';
+import { Send, Loader2, Lock, Search, CheckCheck, Sparkles, MessageSquare, Calendar, User } from 'lucide-react';
 import { CandidateProfileModal } from '../components/CandidateProfileModal';
 
 export function MessagesPage() {
@@ -22,7 +22,6 @@ export function MessagesPage() {
   // Profile Modal State
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [fullCandidateProfile, setFullCandidateProfile] = useState<any>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Generate smart suggestions based on the last message
   const generateSuggestions = useCallback((msgs: Message[]) => {
@@ -189,7 +188,6 @@ export function MessagesPage() {
     
     // Only employers view candidate profiles usually, but for now we allow checking role
     if (selectedUser.role === 'veteran') {
-      setIsLoadingProfile(true);
       try {
         const data = await getCandidateById(selectedUser._id);
         setFullCandidateProfile(data);
@@ -197,8 +195,6 @@ export function MessagesPage() {
       } catch (error) {
         console.error("Failed to fetch profile", error);
         alert("Could not load candidate profile.");
-      } finally {
-        setIsLoadingProfile(false);
       }
     } else {
         // If it's an employer profile, we might show something else or just basic info
@@ -209,11 +205,6 @@ export function MessagesPage() {
   const handleScheduleInterview = () => {
     // Mock functionality
     alert("Interview Scheduler would open here. Integration with Calendly or internal scheduler.");
-  };
-
-  const handleAttachFile = () => {
-    // Mock functionality
-    alert("File picker would open here.");
   };
 
   const filteredConversations = conversations.filter(conv => 
