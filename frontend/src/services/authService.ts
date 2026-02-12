@@ -27,6 +27,7 @@ export interface AuthResponse {
   lastName: string;
   email: string;
   role: 'veteran' | 'employer' | 'admin';
+  companyId?: string; // Link to Company model
   companyName?: string;
   companyDescription?: string; // Legacy support
   companyWebsite?: string;     // Legacy support

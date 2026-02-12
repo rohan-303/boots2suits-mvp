@@ -2,6 +2,7 @@ export interface Job {
   _id: string;
   title: string;
   company: string;
+  companyId?: string | { _id: string; name: string; logo?: string }; // Can be string or populated object
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote' | 'Internship';
   workMode: 'On-site' | 'Remote' | 'Hybrid';

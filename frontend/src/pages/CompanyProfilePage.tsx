@@ -1,59 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { updateProfile, type UserProfile } from '../services/userService';
-import { Building2, Globe, MapPin, Users, FileText, Edit2, Save, X, Briefcase } from 'lucide-react';
+import { getCompanyById, updateCompany, type Company } from '../services/companyService';
+import { Building2, Globe, MapPin, Users, FileText, Edit2, Save, X } from 'lucide-react';
 
 export function CompanyProfilePage() {
-  const { user, login } = useAuth(); // login updates the user context
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [company, setCompany] = useState<Company | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  
+  // Form state for editing
+  const [formData, setFormData] = useState<Partial<Company>>({});
 
-  const [formData, setFormData] = useState({
-    companyName: user?.companyName || '',
-    website: user?.companyProfile?.website || '',
-    industry: user?.companyProfile?.industry || '',
-    location: user?.companyProfile?.location || '',
-    size: user?.companyProfile?.size || '',
-    description: user?.companyProfile?.description || '',
-  });
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (user?.companyId) {
+        try {
+          const data = await getCompanyById(user.companyId);
+          setCompany(data);
+          setFormData(data);
+        } catch (err) {
+          console.error(err);
+          setError('Failed to load company profile');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+    fetchCompany();
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
+    if (!user?.companyId) return;
 
     try {
-      const updateData: Partial<UserProfile> = {
-        companyName: formData.companyName,
-        companyProfile: {
-          website: formData.website,
-          industry: formData.industry,
-          location: formData.location,
-          size: formData.size,
-          description: formData.description,
-        }
-      };
-
-      const updatedUser = await updateProfile(updateData);
-      login(updatedUser); // Update context
-      setSuccess('Company profile updated successfully!');
+      const updatedCompany = await updateCompany(user.companyId, formData);
+      setCompany(updatedCompany);
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update profile');
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to update company:', err);
+      alert('Failed to update company profile');
     }
   };
+
+  if (isLoading) return <div className="p-8 text-center">Loading...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   if (!user || user.role !== 'employer') {
     return (
@@ -62,6 +62,15 @@ export function CompanyProfilePage() {
         <p className="text-neutral-gray mt-2">This page is only available for employers.</p>
       </div>
     );
+  }
+
+  if (!company) {
+     return (
+        <div className="p-8 text-center">
+           <h2 className="text-2xl font-bold text-neutral-dark">No Company Linked</h2>
+           <p className="text-neutral-gray mt-2">Please complete onboarding to link a company.</p>
+        </div>
+     );
   }
 
   return (
@@ -82,43 +91,49 @@ export function CompanyProfilePage() {
         )}
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700">
-          {success}
-        </div>
-      )}
-
+      {/* Main Content */}
       <div className="bg-white rounded-xl shadow-sm border border-neutral-light overflow-hidden">
-        {/* Banner / Header Area */}
+        {/* Header/Banner */}
         <div className="h-32 bg-linear-to-r from-primary to-accent opacity-90 relative">
           <div className="absolute -bottom-12 left-8">
-            <div className="w-24 h-24 bg-white rounded-xl shadow-md flex items-center justify-center border-4 border-white">
-              <Building2 className="w-12 h-12 text-primary" />
+            <div className="h-24 w-24 bg-white rounded-xl border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
+              {company.logo ? (
+                <img src={company.logo} alt={company.name} className="w-full h-full object-cover" />
+              ) : (
+                <Building2 className="h-12 w-12 text-primary" />
+              )}
             </div>
           </div>
         </div>
-
-        <div className="pt-16 px-8 pb-8">
+        
+        <div className="pt-16 pb-8 px-8">
           {isEditing ? (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-neutral-dark mb-1">Company Name</label>
                   <input
                     type="text"
-                    name="companyName"
-                    value={formData.companyName}
+                    name="name"
+                    value={formData.name || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
+                    disabled // Name change usually requires verification
+                  />
+                  <p className="text-xs text-neutral-gray mt-1">Contact support to change company name</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-dark mb-1">Industry</label>
+                  <input
+                    type="text"
+                    name="industry"
+                    value={formData.industry || ''}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-dark mb-1">Website</label>
                   <div className="relative">
@@ -126,80 +141,63 @@ export function CompanyProfilePage() {
                     <input
                       type="url"
                       name="website"
-                      value={formData.website}
+                      value={formData.website || ''}
                       onChange={handleChange}
-                      placeholder="https://example.com"
                       className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="https://example.com"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-neutral-dark mb-1">Industry</label>
+                  <label className="block text-sm font-medium text-neutral-dark mb-1">Location</label>
                   <div className="relative">
-                    <Briefcase className="absolute left-3 top-2.5 w-5 h-5 text-neutral-gray" />
-                    <select
-                      name="industry"
-                      value={formData.industry}
+                    <MapPin className="absolute left-3 top-2.5 w-5 h-5 text-neutral-gray" />
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location || ''}
                       onChange={handleChange}
                       className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    >
-                      <option value="">Select Industry</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Defense">Defense</option>
-                      <option value="Healthcare">Healthcare</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Manufacturing">Manufacturing</option>
-                      <option value="Logistics">Logistics</option>
-                      <option value="Other">Other</option>
-                    </select>
+                      placeholder="Headquarters location"
+                    />
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-dark mb-1">Company Size</label>
                   <div className="relative">
                     <Users className="absolute left-3 top-2.5 w-5 h-5 text-neutral-gray" />
                     <select
                       name="size"
-                      value={formData.size}
+                      value={formData.size || ''}
                       onChange={handleChange}
                       className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
-                      <option value="">Select Size</option>
-                      <option value="1-10">1-10 Employees</option>
-                      <option value="11-50">11-50 Employees</option>
-                      <option value="51-200">51-200 Employees</option>
-                      <option value="201-500">201-500 Employees</option>
-                      <option value="500+">500+ Employees</option>
+                      <option value="">Select size</option>
+                      <option value="1-10">1-10 employees</option>
+                      <option value="11-50">11-50 employees</option>
+                      <option value="51-200">51-200 employees</option>
+                      <option value="201-500">201-500 employees</option>
+                      <option value="501-1000">501-1000 employees</option>
+                      <option value="1000+">1000+ employees</option>
                     </select>
                   </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-neutral-dark mb-1">Headquarters Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-2.5 w-5 h-5 text-neutral-gray" />
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      placeholder="e.g. Austin, TX"
-                      className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-neutral-dark mb-1">About Company</label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 w-5 h-5 text-neutral-gray" />
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={5}
-                      className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Tell veterans about your company culture and mission..."
-                    />
-                  </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-dark mb-1">Description</label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 w-5 h-5 text-neutral-gray" />
+                  <textarea
+                    name="description"
+                    value={formData.description || ''}
+                    onChange={handleChange}
+                    rows={5}
+                    className="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Tell veterans about your company culture and mission..."
+                  />
                 </div>
               </div>
 
@@ -217,69 +215,39 @@ export function CompanyProfilePage() {
                   disabled={isLoading}
                   className="flex items-center gap-2 px-6 py-2 bg-accent text-primary-dark font-bold rounded-lg hover:bg-accent-light transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {isLoading ? 'Saving...' : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Save Profile
-                    </>
-                  )}
+                  <Save className="w-4 h-4" />
+                  Save Profile
                 </button>
               </div>
             </form>
           ) : (
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-2xl font-bold text-neutral-dark">{user.companyName}</h2>
-                <div className="flex flex-wrap gap-4 mt-3 text-sm text-neutral-gray">
-                  {user.companyProfile?.industry && (
-                    <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
-                      <Briefcase className="w-4 h-4" /> {user.companyProfile.industry}
-                    </span>
-                  )}
-                  {user.companyProfile?.size && (
-                    <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
-                      <Users className="w-4 h-4" /> {user.companyProfile.size}
-                    </span>
-                  )}
-                  {user.companyProfile?.location && (
-                    <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
-                      <MapPin className="w-4 h-4" /> {user.companyProfile.location}
-                    </span>
-                  )}
-                  {user.companyProfile?.website && (
+            <div>
+              <h2 className="text-2xl font-bold text-neutral-dark mb-1">{company.name}</h2>
+              <div className="flex flex-wrap gap-4 mt-3 text-sm text-neutral-gray mb-6">
+                <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
+                  <Building2 className="w-4 h-4" /> {company.industry}
+                </span>
+                <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
+                  <MapPin className="w-4 h-4" /> {company.location || 'Location N/A'}
+                </span>
+                <span className="flex items-center gap-1 bg-neutral-light/30 px-3 py-1 rounded-full">
+                  <Users className="w-4 h-4" /> {company.size || 'Size N/A'}
+                </span>
+                {company.website && (
                     <a 
-                      href={user.companyProfile.website} 
+                      href={company.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-primary hover:underline px-3 py-1"
                     >
                       <Globe className="w-4 h-4" /> Website
                     </a>
-                  )}
-                </div>
+                )}
               </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-neutral-dark mb-3">About Us</h3>
-                <p className="text-neutral-gray leading-relaxed whitespace-pre-line">
-                  {user.companyProfile?.description || "No description added yet. Click 'Edit Profile' to add details about your company."}
-                </p>
-              </div>
-
-              {/* Stats Section Placeholder */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-neutral-light">
-                <div className="text-center p-4 bg-secondary/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">0</div>
-                  <div className="text-sm text-neutral-gray">Active Jobs</div>
-                </div>
-                <div className="text-center p-4 bg-secondary/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">0</div>
-                  <div className="text-sm text-neutral-gray">Applicants</div>
-                </div>
-                <div className="text-center p-4 bg-secondary/50 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">0</div>
-                  <div className="text-sm text-neutral-gray">Hires</div>
-                </div>
+              
+              <div className="prose max-w-none text-neutral-dark">
+                  <h3 className="text-lg font-semibold mb-2">About Us</h3>
+                  <p className="whitespace-pre-line">{company.description || 'No description provided.'}</p>
               </div>
             </div>
           )}

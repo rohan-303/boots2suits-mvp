@@ -18,10 +18,16 @@ import { MyApplicationsPage } from './pages/MyApplicationsPage';
 import PartnersPage from './pages/PartnersPage';
 import ResourcesPage from './pages/ResourcesPage';
 import SuccessStoriesPage from './pages/SuccessStoriesPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { MessagesPage } from './pages/MessagesPage';
+import { SavedCandidatesPage } from './pages/SavedCandidatesPage';
 import { LinkedInCallback } from './pages/LinkedInCallback';
 import { CompanyProfilePage } from './pages/CompanyProfilePage';
+import { EmployerOnboardingPage } from './pages/EmployerOnboardingPage';
+import { CompaniesPage } from './pages/CompaniesPage';
+import { CompanyPublicPage } from './pages/CompanyPublicPage';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -33,6 +39,9 @@ function App() {
           <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<LandingPage />} />
+            <Route path="onboarding" element={<EmployerOnboardingPage />} />
+            <Route path="companies" element={<CompaniesPage />} />
+            <Route path="companies/:id" element={<CompanyPublicPage />} />
             <Route path="candidates" element={<CandidatesPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="messages" element={<MessagesPage />} />
@@ -46,8 +55,10 @@ function App() {
             <Route path="partners" element={<PartnersPage />} />
             <Route path="resources" element={<ResourcesPage />} />
             <Route path="stories" element={<SuccessStoriesPage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="contact" element={<ContactPage />} />
             <Route path="admin" element={<AdminDashboardPage />} />
-            <Route path="saved" element={<div className="p-8 text-center text-neutral-gray">Saved Candidates Coming Soon</div>} />
+            <Route path="saved" element={<SavedCandidatesPage />} />
             <Route path="profile" element={<CompanyProfilePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />

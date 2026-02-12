@@ -15,10 +15,18 @@ import applicationRoutes from './routes/applicationRoutes';
 import storyRoutes from './routes/storyRoutes';
 import partnerRoutes from './routes/partnerRoutes';
 import messageRoutes from './routes/messageRoutes';
+import companyRoutes from './routes/companyRoutes';
 import { errorHandler, notFound } from './middleware/errorMiddleware';
 import { mongoSanitize, xssSanitize } from './middleware/securityMiddleware';
 
 const app = express();
+
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*', // Allow configured client URL or all for dev
+  credentials: true
+}));
+app.use(morgan('dev'));
 
 // Security Middleware
 app.use(helmet());
@@ -34,17 +42,10 @@ app.use(hpp()); // Prevent HTTP Parameter Pollution
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Increased limit for polling
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api', limiter);
-
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || '*', // Allow configured client URL or all for dev
-  credentials: true
-}));
-app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -55,6 +56,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/stories', storyRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/companies', companyRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');

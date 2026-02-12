@@ -115,7 +115,7 @@ export function JobDetailsPage() {
                   <div className="w-20 h-20 bg-primary/5 rounded-xl border border-neutral-light flex items-center justify-center text-primary font-bold text-3xl shrink-0">
                     {job.company.charAt(0)}
                   </div>
-                  <div className="flex-grow">
+                  <div className="grow">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                       <div>
                         <h1 className="text-3xl font-bold text-neutral-dark font-heading">{job.title}</h1>
@@ -182,7 +182,7 @@ export function JobDetailsPage() {
 
             {/* Veteran Preferences Card */}
             {(job.veteranPreferences?.securityClearance || job.veteranPreferences?.militaryBranch || (job.veteranPreferences?.mosCodes && job.veteranPreferences.mosCodes.length > 0)) && (
-              <div className="bg-gradient-to-r from-[#1e293b] to-[#334155] rounded-xl shadow-md overflow-hidden text-white relative">
+              <div className="bg-linear-to-r from-[#1e293b] to-[#334155] rounded-xl shadow-md overflow-hidden text-white relative">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <Shield className="w-32 h-32" />
                 </div>

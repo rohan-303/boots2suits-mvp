@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IJob extends Document {
   title: string;
   company: string;
+  companyId?: mongoose.Types.ObjectId;
   location: string;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote' | 'Internship';
   workMode: 'On-site' | 'Remote' | 'Hybrid';
@@ -54,6 +55,10 @@ const JobSchema = new Schema<IJob>({
   company: {
     type: String,
     required: [true, 'Please add a company name'],
+  },
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company',
   },
   location: {
     type: String,

@@ -122,7 +122,7 @@ export function ApplicantsPage() {
                         </h3>
                         <div className="flex items-center gap-4 mt-1 text-sm text-neutral-gray">
                           <span className="flex items-center">
-                            <Shield className="w-4 h-4 mr-1 text-secondary" />
+                            <Shield className="w-4 h-4 mr-1 text-primary" />
                             {app.applicant.militaryBranch}
                           </span>
                           <span className="flex items-center">

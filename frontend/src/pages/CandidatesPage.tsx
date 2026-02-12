@@ -1,125 +1,199 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, FileText, Download, MessageSquare, Star, Eye, ShieldCheck, Flag, Loader2, X, Lock } from 'lucide-react';
-import { getCandidates } from '../services/userService';
+import { Search, Download, MessageSquare, Star, Eye, ShieldCheck, Flag, Loader2, Lock, CheckCircle } from 'lucide-react';
+import { getCandidates, saveCandidate } from '../services/userService';
+import { jobService } from '../services/jobService';
 import { useAuth } from '../context/AuthContext';
-
-interface Candidate {
-  id: string;
-  name: string;
-  role: string;
-  location: string;
-  matchScore: number;
-  badges: string[];
-  summary: string;
-  image: string;
-  skills?: string[];
-  experience?: string[];
-  militaryHistory?: {
-    branch: string;
-    rank: string;
-    yearsOfService: number;
-    securityClearance?: string;
-  };
-}
+import type { Job } from '../types/Job';
+import { CandidateProfileModal, type Candidate } from '../components/CandidateProfileModal';
 
 export function CandidatesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Data State
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [myJobs, setMyJobs] = useState<Job[]>([]);
+  
+  // UI State
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  
+  // Save Modal State
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [candidateToSave, setCandidateToSave] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [saveNotes, setSaveNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
+  // Filters State
+  const [filters, setFilters] = useState({
+    search: '',
+    education: '',
+    securityClearance: '',
+    militaryBranch: '',
+    location: ''
+  });
+
+  // Fetch Candidates
+  const fetchCandidates = async () => {
     if (!user) {
       setIsLoading(false);
       return;
     }
+    
+    setIsLoading(true);
+    try {
+      const data = await getCandidates(filters);
+      setCandidates(data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch candidates:', err);
+      setError('Failed to load candidates. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const fetchCandidates = async () => {
-      try {
-        const data = await getCandidates();
-        // Map backend data to UI format
-        const mappedCandidates = data.map((u: any) => ({
-          id: u._id,
-          name: `${u.firstName} ${u.lastName}`,
-          role: u.resume?.title || `${u.militaryBranch} Veteran`,
-          location: u.location || 'USA',
-          matchScore: Math.floor(Math.random() * (99 - 80) + 80), // Mock score for MVP
-          badges: [
-            'Veteran', 
-            u.militaryBranch, 
-            u.resume?.militaryHistory?.securityClearance ? `Clearance: ${u.resume.militaryHistory.securityClearance}` : null
-          ].filter(Boolean),
-          summary: u.resume?.summary || `Dedicated ${u.militaryBranch} veteran ready to transition to civilian workforce.`,
-          image: `https://ui-avatars.com/api/?name=${u.firstName}+${u.lastName}&background=random`,
-          skills: u.resume?.skills || [],
-          experience: u.resume?.experience || [],
-          militaryHistory: u.resume?.militaryHistory
-        }));
-        setCandidates(mappedCandidates);
-      } catch (err) {
-        console.error('Failed to fetch candidates:', err);
-        setError('Failed to load candidates. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCandidates();
+  // Fetch Jobs (for Save Modal)
+  useEffect(() => {
+    if (user?.role === 'employer') {
+      jobService.getMyJobs().then(setMyJobs).catch(console.error);
+    }
   }, [user]);
 
+  // Initial Fetch & Filter Effect
+  useEffect(() => {
+    // Debounce search slightly or just run on effect
+    const timeoutId = setTimeout(() => {
+      fetchCandidates();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [user, filters.education, filters.securityClearance, filters.militaryBranch, filters.location, filters.search]);
+
+  // Handle Save
+  const handleSaveCandidate = async () => {
+    if (!candidateToSave) return;
+    setIsSaving(true);
+    try {
+      await saveCandidate({
+        candidateId: candidateToSave,
+        jobId: selectedJobId || undefined,
+        notes: saveNotes
+      });
+      // Show success feedback (could be a toast, but using alert for now/simple UI)
+      alert('Candidate saved successfully!');
+      setSaveModalOpen(false);
+      setCandidateToSave(null);
+      setSaveNotes('');
+      setSelectedJobId('');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to save candidate');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openSaveModal = (candidateId: string) => {
+    setCandidateToSave(candidateId);
+    setSaveModalOpen(true);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      education: '',
+      securityClearance: '',
+      militaryBranch: '',
+      location: ''
+    });
+  };
+
   return (
-    <div className="flex gap-8">
+    <div className="flex flex-col md:flex-row gap-8">
       {/* Filters Sidebar */}
-      <div className="w-64 shrink-0">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-light">
-          <h2 className="font-bold text-lg mb-4 text-neutral-dark">Filter Candidates</h2>
+      <div className="w-full md:w-64 shrink-0">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-light sticky top-24">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg text-neutral-dark">Filter Candidates</h2>
+            <button onClick={clearFilters} className="text-xs text-primary hover:underline">Reset</button>
+          </div>
           
           <div className="space-y-6">
-            {/* Highest Education */}
+            {/* Search */}
             <div>
-              <h3 className="font-medium text-sm text-neutral-dark mb-3">Highest Education</h3>
-              <div className="space-y-2">
-                {['High School', 'Associate\'s Degree', 'Bachelor\'s Degree', 'Master\'s Degree', 'Doctorate'].map((item) => (
-                  <label key={item} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="education" className="text-primary focus:ring-primary" />
-                    <span className="text-sm text-neutral-gray">{item}</span>
-                  </label>
-                ))}
+              <h3 className="font-medium text-sm text-neutral-dark mb-2">Keywords</h3>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Skill, MOS, Role..." 
+                  value={filters.search}
+                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
               </div>
+            </div>
+
+            {/* Military Branch */}
+            <div>
+              <h3 className="font-medium text-sm text-neutral-dark mb-2">Military Branch</h3>
+              <select 
+                value={filters.militaryBranch}
+                onChange={(e) => setFilters({...filters, militaryBranch: e.target.value})}
+                className="w-full p-2 text-sm border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Any Branch</option>
+                <option value="Army">Army</option>
+                <option value="Navy">Navy</option>
+                <option value="Air Force">Air Force</option>
+                <option value="Marines">Marines</option>
+                <option value="Coast Guard">Coast Guard</option>
+                <option value="Space Force">Space Force</option>
+              </select>
             </div>
 
             {/* Security Clearance */}
             <div>
               <h3 className="font-medium text-sm text-neutral-dark mb-3">Security Clearance</h3>
               <div className="space-y-2">
-                {['Secret', 'Top Secret', 'None'].map((item) => (
+                {['Any', 'Secret', 'Top Secret', 'None'].map((item) => (
                   <label key={item} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" defaultChecked={item === 'Top Secret'} className="rounded text-primary focus:ring-primary" />
+                    <input 
+                      type="radio" 
+                      name="securityClearance"
+                      value={item === 'Any' ? '' : item}
+                      checked={item === 'Any' ? filters.securityClearance === '' : filters.securityClearance === item}
+                      onChange={(e) => setFilters({...filters, securityClearance: e.target.value})}
+                      className="text-primary focus:ring-primary" 
+                    />
                     <span className="text-sm text-neutral-gray">{item}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Citizenship */}
+            {/* Highest Education */}
             <div>
-              <h3 className="font-medium text-sm text-neutral-dark mb-3">Citizenship Status</h3>
+              <h3 className="font-medium text-sm text-neutral-dark mb-3">Highest Education</h3>
               <div className="space-y-2">
-                {['U.S. Citizen', 'Green Card Holder', 'Other'].map((item) => (
+                {['Bachelor', 'Master', 'Doctorate'].map((item) => (
                   <label key={item} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="citizenship" defaultChecked={item === 'U.S. Citizen'} className="text-primary focus:ring-primary" />
-                    <span className="text-sm text-neutral-gray">{item}</span>
+                    <input 
+                      type="radio" 
+                      name="education"
+                      value={item}
+                      checked={filters.education === item}
+                      onChange={(e) => setFilters({...filters, education: e.target.value})}
+                      className="text-primary focus:ring-primary" 
+                    />
+                    <span className="text-sm text-neutral-gray">{item}'s Degree</span>
                   </label>
                 ))}
               </div>
             </div>
-            
-            <button className="w-full bg-primary hover:bg-primary-light text-white font-medium py-2 px-4 rounded transition-colors">
-              Apply Filters
-            </button>
+
           </div>
         </div>
       </div>
@@ -129,42 +203,9 @@ export function CandidatesPage() {
         <h1 className="text-2xl font-bold text-neutral-dark mb-2">Candidates</h1>
         <p className="text-neutral-gray mb-6">Browse matched veteran candidates for your job posts</p>
 
-        {/* Search Bar */}
-        <div className="flex gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-gray w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Search by name, skills, or keywords" 
-              className="w-full pl-10 pr-4 py-3 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-          </div>
-          <button className="bg-primary hover:bg-primary-light text-white font-medium py-3 px-8 rounded-lg transition-colors">
-            Search Results
-          </button>
-        </div>
-
-        {/* Selected Filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-sm font-medium text-neutral-dark mr-2 py-1">Selected Filters:</span>
-          {['Job Role: Facilities Manager', 'Security Clearance: Top Secret', 'Industry: Tech'].map((filter) => (
-            <span key={filter} className="inline-flex items-center bg-green-100 text-primary-dark text-xs px-3 py-1 rounded-full font-medium">
-              {filter}
-              <button className="ml-2 hover:text-red-500">×</button>
-            </span>
-          ))}
-        </div>
-
         {/* Results Header */}
         <div className="flex justify-between items-center mb-4">
-          <span className="text-neutral-dark font-medium">{candidates.length} candidates matched</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-gray">Sort by:</span>
-            <select className="text-sm font-medium border-none bg-transparent focus:ring-0 cursor-pointer">
-              <option>Match Score</option>
-              <option>Newest</option>
-            </select>
-          </div>
+          <span className="text-neutral-dark font-medium">{candidates.length} candidates found</span>
         </div>
 
         {/* Candidate List */}
@@ -181,9 +222,6 @@ export function CandidatesPage() {
               <Link to="/login" className="bg-primary hover:bg-primary-light text-white font-medium py-2 px-6 rounded-lg transition-colors">
                 Log In
               </Link>
-              <Link to="/signup" className="bg-white border border-neutral-light hover:bg-neutral-light text-neutral-dark font-medium py-2 px-6 rounded-lg transition-colors">
-                Sign Up
-              </Link>
             </div>
           </div>
         ) : isLoading ? (
@@ -197,60 +235,74 @@ export function CandidatesPage() {
         ) : candidates.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg border border-neutral-light">
             <p className="text-neutral-gray">No candidates found matching your criteria.</p>
+            <button onClick={clearFilters} className="mt-4 text-primary font-medium hover:underline">
+              Clear all filters
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
             {candidates.map((candidate) => (
-              <div key={candidate.id} className="bg-white p-6 rounded-lg shadow-sm border border-neutral-light hover:shadow-md transition-shadow">
+              <div key={candidate._id} className="bg-white p-6 rounded-lg shadow-sm border border-neutral-light hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-4">
-                  <img src={candidate.image} alt={candidate.name} className="w-16 h-16 rounded-full object-cover" />
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl shrink-0">
+                    {candidate.firstName[0]}{candidate.lastName[0]}
+                  </div>
                   <div className="flex-1">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
                       <div>
-                        <h3 className="text-lg font-bold text-neutral-dark">{candidate.name}</h3>
+                        <h3 className="text-lg font-bold text-neutral-dark">{candidate.firstName} {candidate.lastName}</h3>
                         <div className="text-sm text-neutral-gray mb-2">
                           {candidate.role} <span className="mx-1">|</span> {candidate.location}
                         </div>
                       </div>
-                      <div className="bg-green-100 text-primary-dark font-bold px-3 py-1 rounded text-sm">
-                        {candidate.matchScore}% Match
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-2">
+                         {candidate.militaryBranch && (
+                           <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded font-medium">
+                             <Flag className="w-3 h-3" /> {candidate.militaryBranch}
+                           </span>
+                         )}
+                         {candidate.persona?.securityClearance && candidate.persona.securityClearance !== 'None' && (
+                           <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs px-2 py-1 rounded font-medium">
+                             <ShieldCheck className="w-3 h-3" /> {candidate.persona.securityClearance}
+                           </span>
+                         )}
                       </div>
                     </div>
 
-                    <div className="flex gap-2 mb-3">
-                      {candidate.badges.map((badge, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-dark text-xs px-2 py-1 rounded font-medium">
-                          {badge.includes('Clearance') && <ShieldCheck className="w-3 h-3 text-green-600" />}
-                          {badge.includes('Veteran') && <Flag className="w-3 h-3 text-blue-600" />}
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
-
-                    <p className="text-neutral-gray text-sm mb-4 leading-relaxed">
-                      {candidate.summary}
+                    <p className="text-neutral-gray text-sm mb-4 leading-relaxed line-clamp-2">
+                      {candidate.resume?.summary || 'No summary available.'}
                     </p>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <button 
                         onClick={() => setSelectedCandidate(candidate)}
-                        className="flex items-center gap-2 px-4 py-2 border border-neutral-light rounded text-sm font-medium text-neutral-dark hover:bg-neutral-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded text-sm hover:bg-primary-light transition-colors"
                       >
-                        <FileText className="w-4 h-4" /> View Resume
+                        <Eye className="w-4 h-4" /> View Profile
                       </button>
-                      <button className="flex items-center gap-2 px-4 py-2 border border-neutral-light rounded text-sm font-medium text-neutral-dark hover:bg-neutral-50">
-                        <Download className="w-4 h-4" /> Download
-                      </button>
-                      <div className="flex-1"></div>
+                      
+                      {candidate.resume?.fileUrl && (
+                        <a 
+                          href={candidate.resume.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 border border-neutral-light rounded text-sm font-medium text-neutral-dark hover:bg-neutral-50"
+                        >
+                          <Download className="w-4 h-4" /> Resume
+                        </a>
+                      )}
+                      
+                      <div className="flex-1 md:hidden"></div>
+                      
                       <button 
-                        onClick={() => navigate(`/messages?userId=${candidate.id}`, { 
+                        onClick={() => navigate(`/messages?userId=${candidate._id}`, { 
                           state: { 
                             user: {
-                              _id: candidate.id,
-                              firstName: candidate.name.split(' ')[0],
-                              lastName: candidate.name.split(' ').slice(1).join(' '),
-                              image: candidate.image,
-                              role: 'veteran' // Assuming candidates are veterans
+                              _id: candidate._id,
+                              firstName: candidate.firstName,
+                              lastName: candidate.lastName,
+                              role: 'veteran'
                             }
                           }
                         })}
@@ -258,11 +310,12 @@ export function CandidatesPage() {
                       >
                         <MessageSquare className="w-4 h-4" /> Message
                       </button>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-green-50 text-primary font-medium rounded text-sm hover:bg-green-100">
+                      
+                      <button 
+                        onClick={() => openSaveModal(candidate._id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-neutral-50 border border-neutral-light text-neutral-dark font-medium rounded text-sm hover:bg-neutral-100"
+                      >
                         <Star className="w-4 h-4" /> Save
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded text-sm hover:bg-primary-light">
-                        <Eye className="w-4 h-4" /> View Profile
                       </button>
                     </div>
                   </div>
@@ -272,121 +325,64 @@ export function CandidatesPage() {
           </div>
         )}
       </div>
-      {/* Resume Modal */}
+
+      {/* Profile Modal */}
       {selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-neutral-light sticky top-0 bg-white">
-              <div>
-                <h2 className="text-2xl font-bold text-neutral-dark">{selectedCandidate.name}</h2>
-                <p className="text-neutral-gray">{selectedCandidate.role}</p>
-              </div>
-              <button 
-                onClick={() => setSelectedCandidate(null)}
-                className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-neutral-gray" />
-              </button>
+        <CandidateProfileModal 
+          candidate={selectedCandidate} 
+          onClose={() => setSelectedCandidate(null)} 
+        />
+      )}
+
+      {/* Save Candidate Modal */}
+      {saveModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-neutral-light">
+              <h2 className="text-xl font-bold text-neutral-dark">Save Candidate</h2>
+              <p className="text-sm text-neutral-gray">Shortlist this candidate for a specific job or general pool.</p>
             </div>
             
-            <div className="p-6 space-y-8">
-              {/* Summary */}
-              <section>
-                <h3 className="text-lg font-bold text-neutral-dark mb-3 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" /> Professional Summary
-                </h3>
-                <p className="text-neutral-dark leading-relaxed bg-neutral-50 p-4 rounded-lg">
-                  {selectedCandidate.summary}
-                </p>
-              </section>
-
-              {/* Skills */}
-              {selectedCandidate.skills && selectedCandidate.skills.length > 0 && (
-                <section>
-                  <h3 className="text-lg font-bold text-neutral-dark mb-3 flex items-center gap-2">
-                    <Star className="w-5 h-5 text-primary" /> Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedCandidate.skills.map((skill, idx) => (
-                      <span key={idx} className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Experience */}
-              {selectedCandidate.experience && selectedCandidate.experience.length > 0 && (
-                <section>
-                  <h3 className="text-lg font-bold text-neutral-dark mb-3 flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-primary" /> Experience
-                  </h3>
-                  <div className="space-y-4">
-                    {selectedCandidate.experience.map((exp, idx) => (
-                      <div key={idx} className="border-l-2 border-primary pl-4 py-1">
-                        <p className="text-neutral-dark">{exp}</p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Military History */}
-              {selectedCandidate.militaryHistory && (
-                <section>
-                  <h3 className="text-lg font-bold text-neutral-dark mb-3 flex items-center gap-2">
-                    <Flag className="w-5 h-5 text-primary" /> Military Service
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-neutral-50 p-4 rounded-lg">
-                    <div>
-                      <p className="text-sm text-neutral-gray">Branch</p>
-                      <p className="font-medium text-neutral-dark">{selectedCandidate.militaryHistory.branch}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-neutral-gray">Rank</p>
-                      <p className="font-medium text-neutral-dark">{selectedCandidate.militaryHistory.rank}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-neutral-gray">Years of Service</p>
-                      <p className="font-medium text-neutral-dark">{selectedCandidate.militaryHistory.yearsOfService} years</p>
-                    </div>
-                    {selectedCandidate.militaryHistory.securityClearance && (
-                      <div>
-                        <p className="text-sm text-neutral-gray">Security Clearance</p>
-                        <p className="font-medium text-neutral-dark">{selectedCandidate.militaryHistory.securityClearance}</p>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              )}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-dark mb-1">Select Job (Optional)</label>
+                <select 
+                  value={selectedJobId}
+                  onChange={(e) => setSelectedJobId(e.target.value)}
+                  className="w-full p-2 border border-neutral-light rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                >
+                  <option value="">-- General Save (No specific job) --</option>
+                  {myJobs.map(job => (
+                    <option key={job._id} value={job._id}>{job.title}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-neutral-dark mb-1">Notes (Optional)</label>
+                <textarea 
+                  value={saveNotes}
+                  onChange={(e) => setSaveNotes(e.target.value)}
+                  placeholder="Add private notes about this candidate..."
+                  className="w-full p-2 border border-neutral-light rounded-lg h-24 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
+                />
+              </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-neutral-light bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+            <div className="p-6 border-t border-neutral-light flex justify-end gap-3 bg-gray-50 rounded-b-xl">
               <button 
-                onClick={() => setSelectedCandidate(null)}
-                className="px-6 py-2 border border-neutral-light rounded-lg font-medium text-neutral-dark hover:bg-white transition-colors"
+                onClick={() => setSaveModalOpen(false)}
+                className="px-4 py-2 text-neutral-gray hover:text-neutral-dark font-medium"
               >
-                Close
+                Cancel
               </button>
               <button 
-                onClick={() => {
-                  navigate(`/messages?userId=${selectedCandidate.id}`, { 
-                    state: { 
-                      user: {
-                        _id: selectedCandidate.id,
-                        firstName: selectedCandidate.name.split(' ')[0],
-                        lastName: selectedCandidate.name.split(' ').slice(1).join(' '),
-                        image: selectedCandidate.image,
-                        role: 'veteran'
-                      }
-                    }
-                  });
-                }}
-                className="flex items-center gap-2 px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-light transition-colors shadow-sm"
+                onClick={handleSaveCandidate}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-light transition-colors disabled:opacity-70"
               >
-                <MessageSquare className="w-4 h-4" /> Message Candidate
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Save Candidate
               </button>
             </div>
           </div>

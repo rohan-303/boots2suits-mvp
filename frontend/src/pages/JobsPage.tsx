@@ -17,9 +17,7 @@ export function JobsPage() {
     const fetchJobs = async () => {
       try {
         setLoading(true);
-        console.log('Fetching jobs...');
         const data = await jobService.getJobs();
-        console.log('Jobs fetched:', data);
         setJobs(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load jobs. Please try again later.');

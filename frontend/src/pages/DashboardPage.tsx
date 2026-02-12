@@ -9,10 +9,14 @@ export function DashboardPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/login');
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        navigate('/login');
+      } else if (user?.role === 'employer' && !user.companyId) {
+        navigate('/onboarding');
+      }
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, navigate, user]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;

@@ -6,7 +6,6 @@ import Job from '../models/Job';
 // @access  Private (Employer only)
 export const createJob = async (req: Request, res: Response) => {
   try {
-    console.log('createJob controller hit');
     const { 
       title, 
       company, 
@@ -84,13 +83,18 @@ export const createJob = async (req: Request, res: Response) => {
 // @access  Public (or Private based on requirements)
 export const getJobs = async (req: Request, res: Response) => {
   try {
-    console.log('getJobs controller hit');
-    // Optional: Filtering logic can be added here
-    const jobs = await Job.find({ isActive: true })
-      .sort({ createdAt: -1 })
-      .populate('postedBy', 'name email company'); // Populate employer details
+    const query: any = { isActive: true };
     
-    console.log(`Found ${jobs.length} jobs`);
+    // Filter by companyId if provided
+    if (req.query.companyId) {
+      query.companyId = req.query.companyId;
+    }
+
+    const jobs = await Job.find(query)
+      .sort({ createdAt: -1 })
+      .populate('postedBy', 'firstName lastName email')
+      .populate('companyId', 'name logo location'); // Populate company details
+    
     res.status(200).json(jobs);
   } catch (error: any) {
     console.error('Error in getJobs:', error);

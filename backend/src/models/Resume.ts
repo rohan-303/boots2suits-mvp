@@ -11,13 +11,22 @@ export interface IMilitaryHistory {
   description?: string;
 }
 
+export interface IEducation {
+  school: string;
+  degree: string;
+  fieldOfStudy?: string;
+  graduationYear?: string;
+}
+
 export interface IResume extends Document {
   user: mongoose.Types.ObjectId;
   title: string;
   militaryHistory: IMilitaryHistory;
+  education?: IEducation[];
   generatedSummary: string;
   generatedSkills: string[];
   generatedExperience: string[];
+  fileUrl?: string; // URL to the uploaded/generated PDF
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +52,12 @@ const resumeSchema = new Schema<IResume>({
     awards: { type: String },
     description: { type: String }
   },
+  education: [{
+    school: { type: String, required: true },
+    degree: { type: String, required: true },
+    fieldOfStudy: { type: String },
+    graduationYear: { type: String }
+  }],
   generatedSummary: {
     type: String,
     default: ''
@@ -53,6 +68,9 @@ const resumeSchema = new Schema<IResume>({
   generatedExperience: [{
     type: String
   }],
+  fileUrl: {
+    type: String
+  }
 }, {
   timestamps: true
 });

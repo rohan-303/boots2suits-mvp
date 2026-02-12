@@ -5,7 +5,7 @@ import process from 'process';
 
 dotenv.config();
 
-// Connect to Database
+// Database connection is handled in startup
 connectDB();
 
 const PORT = process.env.PORT || 5000;

@@ -31,12 +31,10 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
     // Role-specific validation
     if (role === 'employer' && !companyName) {
-      console.log('Registration failed: Missing companyName for employer');
       res.status(400);
       throw new Error('Company name is required for employers');
     }
     if (role === 'veteran' && !militaryBranch) {
-      console.log('Registration failed: Missing militaryBranch for veteran');
       res.status(400);
       throw new Error('Military branch is required for veterans');
     }
@@ -44,7 +42,6 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
-      console.log(`Registration failed: User already exists (${email})`);
       res.status(400);
       throw new Error('User already exists');
     }
@@ -73,15 +70,13 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         try {
             const company = await Company.create({
                 name: companyName,
+                industry: 'Unspecified', // Default value as it's required in schema
                 website: companyWebsite,
-                adminId: user._id,
-                policies: {
-                    termsAccepted: termsAccepted,
-                    termsAcceptedAt: new Date()
-                }
+                verified: false
             });
             
-            user.companyId = company._id as any;
+            // @ts-ignore
+            user.companyId = company._id;
             await user.save();
         } catch (err) {
             console.error('Failed to create company record:', err);
@@ -136,6 +131,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      companyId: user.companyId,
       token: generateToken(user.id),
     });
   } catch (error) {
@@ -182,6 +178,7 @@ export const googleAuth = async (req: Request, res: Response, next: NextFunction
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        companyId: user.companyId,
         token: generateToken(user.id),
       });
     } else {
@@ -220,6 +217,7 @@ export const googleAuth = async (req: Request, res: Response, next: NextFunction
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        companyId: user.companyId,
         token: generateToken(user.id),
       });
     }
@@ -297,6 +295,7 @@ export const linkedinAuth = async (req: Request, res: Response, next: NextFuncti
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      companyId: user.companyId,
       token: generateToken(user.id),
     });
 

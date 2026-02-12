@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getConversations, getMessages, sendMessage, type Conversation, type Message } from '../services/messageService';
-import { getUser } from '../services/userService';
-import { Send, Loader2, Lock, MoreVertical, Search, CheckCheck, Sparkles, MessageSquare } from 'lucide-react';
+import { getUser, getCandidateById } from '../services/userService';
+import { Send, Loader2, Lock, MoreVertical, Search, CheckCheck, Sparkles, MessageSquare, Paperclip, Calendar, User, FileText } from 'lucide-react';
+import { CandidateProfileModal } from '../components/CandidateProfileModal';
 
 export function MessagesPage() {
   const { user } = useAuth();
@@ -15,8 +16,13 @@ export function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  // Profile Modal State
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [fullCandidateProfile, setFullCandidateProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Generate smart suggestions based on the last message
   const generateSuggestions = useCallback((msgs: Message[]) => {
@@ -131,7 +137,13 @@ export function MessagesPage() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      const { scrollHeight, clientHeight } = messagesContainerRef.current;
+      messagesContainerRef.current.scrollTo({
+        top: scrollHeight - clientHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages]);
 
   const handleSend = async (e?: React.FormEvent, content: string = newMessage) => {
@@ -170,6 +182,38 @@ export function MessagesPage() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleViewProfile = async () => {
+    if (!selectedUser) return;
+    
+    // Only employers view candidate profiles usually, but for now we allow checking role
+    if (selectedUser.role === 'veteran') {
+      setIsLoadingProfile(true);
+      try {
+        const data = await getCandidateById(selectedUser._id);
+        setFullCandidateProfile(data);
+        setProfileModalOpen(true);
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+        alert("Could not load candidate profile.");
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    } else {
+        // If it's an employer profile, we might show something else or just basic info
+        alert("Full profile view is only available for candidates.");
+    }
+  };
+
+  const handleScheduleInterview = () => {
+    // Mock functionality
+    alert("Interview Scheduler would open here. Integration with Calendly or internal scheduler.");
+  };
+
+  const handleAttachFile = () => {
+    // Mock functionality
+    alert("File picker would open here.");
   };
 
   const filteredConversations = conversations.filter(conv => 
@@ -213,7 +257,7 @@ export function MessagesPage() {
               <button
                 key={conv.user._id}
                 onClick={() => setSelectedUser(conv.user)}
-                className={`w-full text-left p-4 border-b border-gray-100 hover:bg-white transition-all flex items-start gap-3 group ${
+                className={`w-full text-left p-4 border-b border-gray-100 hover:bg-white transition-all flex items-start gap-3 group outline-none focus:bg-gray-50 ${
                   selectedUser?._id === conv.user._id ? 'bg-white border-l-4 border-l-primary shadow-sm' : 'border-l-4 border-l-transparent'
                 }`}
               >
@@ -282,18 +326,33 @@ export function MessagesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4 text-neutral-gray">
+                {selectedUser.role === 'veteran' && (
+                  <>
+                    <button 
+                      onClick={handleViewProfile}
+                      className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-light rounded-lg text-xs font-medium text-neutral-dark hover:bg-gray-50 transition-colors"
+                      title="View Profile"
+                    >
+                      <User className="h-3.5 w-3.5" /> Profile
+                    </button>
+                    <button 
+                      onClick={handleScheduleInterview}
+                      className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-light rounded-lg text-xs font-medium text-neutral-dark hover:bg-gray-50 transition-colors"
+                      title="Schedule Interview"
+                    >
+                      <Calendar className="h-3.5 w-3.5" /> Interview
+                    </button>
+                  </>
+                )}
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
                   <Lock className="h-3 w-3" />
                   <span className="text-xs font-medium">Encrypted</span>
                 </div>
-                <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
               </div>
             </div>
 
             {/* Messages List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
                   <div className="h-24 w-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
@@ -327,7 +386,6 @@ export function MessagesPage() {
                   );
                 })
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area & Suggestions */}
@@ -384,6 +442,14 @@ export function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Profile Modal */}
+      {fullCandidateProfile && profileModalOpen && (
+        <CandidateProfileModal
+          onClose={() => setProfileModalOpen(false)}
+          candidate={fullCandidateProfile}
+        />
+      )}
     </div>
   );
 }
